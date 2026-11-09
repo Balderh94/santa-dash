@@ -5,8 +5,8 @@
 - Project: SANTA DASH
 - Engine: Godot 4.7.2-stable
 - Language: Typed GDScript
-- Current phase: Phase 1 — Project Foundation
-- Current sprint: Sprint 1.8 — Documentation
+- Current phase: Phase 2 — Core Gameplay Systems
+- Current sprint: Sprint 2.1 — Game Flow
 
 ---
 
@@ -117,34 +117,59 @@ Keyboard mappings:
 
 #### Sprint 1.8 — Technical and Design Documentation
 
-**Status: In Progress**
+**Status: Completed**
 
-Documents prepared:
+- SANTA DASH project documentation created and reviewed.
+- Core documentation created and reviewed.
+- GENERIC RUNNER documentation files created.
+- Core architecture, API reference, development guide and changelog reviewed for consistency.
+- Initial documentation changes committed and pushed to the three GitHub repositories.
+- Repository structures and documentation organization verified.
 
-- ARCHITECTURE.md
-- TECHNICAL_DOCUMENTATION.md
-- GAME_DESIGN_DOCUMENT.md
-- ART_ASSET_LIST.md
-- ART_DIRECTION_GUIDE.md
-- PROJECT_MASTER.md
-
-Remaining:
-
-- DEVELOPMENT_LOG.md
-- DECISIONS.md
-- BUG_TRACKER.md
-- Cross-document consistency review.
-- Git commit and push.
 
 ---
 
-## Implementation Status
+### Phase 1 — Project Foundation
 
-No gameplay systems have been implemented.
+**Status: Completed**
 
-No production artistic assets have been imported.
+The SANTA DASH project foundation, repository structure, Godot configuration and initial documentation are complete and published to GitHub.
 
-The current work consists of project setup, architecture decisions and documentation.
+### Phase 2 — Core Gameplay Systems
+
+**Status: In Progress**
+
+#### Sprint 2.1 — Game Flow
+
+**Status: Implemented and functionally tested in the standalone test project; Core repository test copy not independently executed yet.**
+
+Implemented in the `endless-runner-core` repository:
+
+- `core/managers/game_flow_manager.gd`
+- `GameFlowManager` states: READY, RUNNING, PAUSED and FINISHED.
+- Valid transitions for starting, pausing, resuming, finishing and resetting a run.
+- Rejection of invalid state transitions.
+- Signals: `state_changed`, `run_started`, `run_paused`, `run_resumed` and `run_finished`.
+- `tests/test_game_flow_manager.gd` added to the Core repository.
+
+Validation performed:
+
+- Functional tests passed in the separate `endless-runner-core-test` Godot project.
+- Valid and invalid transitions were checked.
+- Signal emission counts were checked.
+- The test script was copied into the Core repository, but that repository copy has not yet been independently executed.
+
+Integration status:
+
+- GameFlowManager has not yet been integrated into the SANTA DASH project.
+- SANTA DASH still references the Core submodule release `v0.1.0`, which predates this implementation.
+- No SANTA DASH gameplay scene or game-specific gameplay script has been changed for Sprint 2.1.
+
+### General Implementation Status
+
+- No production artistic assets have been imported.
+- No other Core gameplay systems have been implemented.
+- The next planned Core system is the Player Controller, subject to completion and approval of Sprint 2.1 documentation and validation.
 
 ---
 
