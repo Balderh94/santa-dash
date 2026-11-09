@@ -6,7 +6,7 @@
 - Engine: Godot 4.7.2-stable
 - Language: Typed GDScript
 - Current phase: Phase 2 — Core Gameplay Systems
-- Current sprint: Sprint 2.1 — Game Flow
+- Current sprint: Sprint 2.2 — Player Controller
 
 ---
 
@@ -141,7 +141,7 @@ The SANTA DASH project foundation, repository structure, Godot configuration and
 
 #### Sprint 2.1 — Game Flow
 
-**Status: Implemented and functionally tested in the standalone test project; Core repository test copy not independently executed yet.**
+**Status: Implemented, documented, tested in the temporary Godot test project, committed and pushed to the Core repository.**
 
 Implemented in the `endless-runner-core` repository:
 
@@ -150,26 +150,55 @@ Implemented in the `endless-runner-core` repository:
 - Valid transitions for starting, pausing, resuming, finishing and resetting a run.
 - Rejection of invalid state transitions.
 - Signals: `state_changed`, `run_started`, `run_paused`, `run_resumed` and `run_finished`.
-- `tests/test_game_flow_manager.gd` added to the Core repository.
+- Core test script: `tests/test_game_flow_manager_core.gd`.
 
 Validation performed:
 
-- Functional tests passed in the separate `endless-runner-core-test` Godot project.
-- Valid and invalid transitions were checked.
-- Signal emission counts were checked.
-- The test script was copied into the Core repository, but that repository copy has not yet been independently executed.
+- The Core test script was copied into the separate `endless-runner-core-test` Godot project and executed successfully.
+- Valid and invalid transitions and signal emission counts were checked.
+- Output confirmed: `PASS: GameFlowManager tests completed successfully.`
 
 Integration status:
 
-- GameFlowManager has not yet been integrated into the SANTA DASH project.
+- GameFlowManager has not yet been integrated into the SANTA DASH gameplay scene.
 - SANTA DASH still references the Core submodule release `v0.1.0`, which predates this implementation.
-- No SANTA DASH gameplay scene or game-specific gameplay script has been changed for Sprint 2.1.
+- No SANTA DASH gameplay scene or game-specific gameplay script was changed for Sprint 2.1.
+
+#### Sprint 2.2 — Player Controller
+
+**Status: Implemented in the Core working tree and functionally tested in the temporary Godot test project. Core commit and push are pending.**
+
+Implemented in the `endless-runner-core` working tree:
+
+- `player/controllers/player_controller.gd`
+- Player states: IDLE, RUNNING, JUMPING, FALLING, SLIDING, HIT and DEAD.
+- Logical jump and slide action requests.
+- A single-slot pending-action queue for controlled jump/slide chaining.
+- Impact interruption and pending-action cancellation.
+- Terminal death state until the Game Flow lifecycle returns to READY.
+- Synchronization with `GameFlowManager` through its `state_changed` signal.
+- `tests/test_player_controller.gd`.
+
+Validation performed:
+
+- The implementation and test script were copied into the separate `endless-runner-core-test` Godot project.
+- The test covered initial state, valid and rejected requests, jump/fall progression, action chaining, queue capacity, pause/resume, hit interruption and recovery, death, reset, and signal counts.
+- Output confirmed: `PASS: PlayerController tests completed successfully.`
+
+Scope and integration status:
+
+- PlayerController manages logical states and action requests only.
+- Physical movement, animation playback, collision detection, and action timing are not implemented by this controller.
+- The exact physical compatibility and timing of jump/slide chaining remain to be validated by the Movement System.
+- PlayerController has not yet been integrated into the SANTA DASH gameplay scene.
+- SANTA DASH still references Core submodule release `v0.1.0`; the Sprint 2.2 implementation is not included in that pinned release.
+- No SANTA DASH gameplay scene, character asset, or game-specific gameplay script was changed for Sprint 2.2.
 
 ### General Implementation Status
 
 - No production artistic assets have been imported.
-- No other Core gameplay systems have been implemented.
-- The next planned Core system is the Player Controller, subject to completion and approval of Sprint 2.1 documentation and validation.
+- Game Flow Manager and Player Controller are the only Core gameplay systems implemented so far.
+- The next planned Core system is the Lane System, after Sprint 2.2 documentation, review, commit, and push are complete.
 
 ---
 
