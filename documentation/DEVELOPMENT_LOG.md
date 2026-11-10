@@ -260,7 +260,7 @@ Scope and integration status:
 
 #### Sprint 2.4.2 — Player Lateral Movement
 
-**Status: Implemented and functionally tested in the temporary Godot test project. Documentation is being updated; repository commits and push are pending.**
+**Status: Implemented, tested, documented, committed and pushed to the Core repository; the Santa Dash development log was committed and pushed.**
 
 Implemented in the `endless-runner-core` working tree:
 
@@ -290,13 +290,50 @@ Scope and integration status:
 - No SANTA DASH gameplay scene, character asset, or game-specific gameplay script was changed for Sprint 2.4.2.
 - SANTA DASH continues to reference the Core submodule release `v0.1.0`; this unreleased working-tree update is not included in that pinned release.
 
+#### Sprint 2.4.3 — Jump and Slide Movement
+
+**Status: Implemented and functionally tested in the temporary Godot test project. Documentation is being updated; repository commits and push are pending.**
+
+Updated in the `endless-runner-core` working tree:
+
+- Extended `gameplay/movement/player_movement.gd`; the existing `PlayerMovement` remains the single physical movement component attached to the `CharacterBody3D` root.
+- Added exported references for `LaneSystem`, `PlayerController` and the player's direct-child `CollisionShape3D`.
+- Updated `bind_dependencies()` to validate all three dependencies and require a vertical `CapsuleShape3D` on a direct child collision node.
+- The supplied capsule resource is duplicated into separate normal and slide capsule resources before configuration, preventing in-place modification of the original shared resource.
+- Added configurable `jump_height` (default 2.0 m) and `gravity` (default 9.8 m/s²).
+- Added `jump_initial_velocity`, calculated as `sqrt(2 * gravity * jump_height)`.
+- Connected to `PlayerController.jump_requested` and implemented jump initiation, gravity, apex detection, falling and landing notification through `notify_jump_apex_reached()` and `notify_jump_finished()`.
+- Added configurable `slide_duration` (default 0.8 seconds), `normal_capsule_height` (1.8 m), `slide_capsule_height` (0.9 m) and `capsule_radius` (0.35 m).
+- Connected to `PlayerController.slide_requested`; slide action switches to the reduced capsule and starts the slide timer.
+- The collision shape's local Y offset is adjusted to half the active capsule height, keeping the capsule bottom aligned with a foot-level player origin.
+- When the slide timer expires, the system queries the full normal capsule at the intended standing position using `PhysicsShapeQueryParameters3D`.
+- The clearance query checks physics bodies, ignores `Area3D`, uses the player's collision mask and excludes the player's own RID.
+- If a physics body blocks standing clearance, the reduced capsule remains active and the query is retried every physics frame. This does not create HIT or complete the slide.
+- HIT blocks lateral control but keeps gravity and floor collision active. Landing during HIT does not automatically recover the HIT state.
+- PAUSED freezes physical simulation and preserves velocity. DEAD stops physical movement.
+- Extended `tests/test_player_movement.gd` and `tests/player_movement_test.tscn` for jump/slide, capsule, clearance, input-buffer chaining and state validation.
+
+Validation performed:
+
+- The updated implementation, test script and temporary test scene were copied into the separate `endless-runner-core-test` Godot project.
+- The test executed successfully in Godot 4.7.2.
+- Output confirmed: `PASS: PlayerMovement jump/slide tests completed successfully (40 assertions).`
+
+Scope and integration status:
+
+- Sprint 2.4.3 extends the existing `PlayerMovement`; it does not add a separate movement node or controller.
+- No character model, animation, production scene, or game-specific SANTA DASH gameplay script was created or changed.
+- The physical player origin is expected to be at foot level, with a direct-child `CollisionShape3D` using a vertical `CapsuleShape3D`.
+- SANTA DASH continues to reference the Core submodule release `v0.1.0`; this unreleased working-tree update is not included in that pinned release.
+
 ### General Implementation Status
 
 - No production artistic assets have been imported.
-- Implemented Core gameplay systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem and PlayerMovement (lateral movement).
+- Implemented Core gameplay systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem and PlayerMovement (lateral movement, jump/fall/landing and slide physics).
 - The Lane System implementation, tests and documentation are committed and pushed to the Core repository.
 - Sprint 2.4.1 implementation and documentation are committed and pushed to the Core repository; the corresponding SANTA DASH development log is also committed and pushed.
-- Sprint 2.4.2 implementation and tests are functionally validated; documentation and repository commits are pending.
+- Sprint 2.4.2 implementation, tests, documentation and repository commits are complete.
+- Sprint 2.4.3 jump/slide implementation and tests are functionally validated; documentation and repository commits are pending.
 
 ---
 
