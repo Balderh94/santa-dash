@@ -229,7 +229,7 @@ Scope and integration status:
 
 #### Sprint 2.4.1 — Input Buffer
 
-**Status: Implemented, documented and functionally tested in the temporary Godot test project. Repository commits and push are pending.**
+**Status: Implemented, tested, documented, committed and pushed to the Core repository; Santa Dash development log committed and pushed.**
 
 Updated in the `endless-runner-core` working tree:
 
@@ -258,11 +258,45 @@ Scope and integration status:
 - No SANTA DASH gameplay scene, character asset, or game-specific gameplay script was changed for Sprint 2.4.1.
 - SANTA DASH continues to reference the Core submodule release `v0.1.0`; this unreleased working-tree update is not included in that pinned release.
 
+#### Sprint 2.4.2 — Player Lateral Movement
+
+**Status: Implemented and functionally tested in the temporary Godot test project. Documentation is being updated; repository commits and push are pending.**
+
+Implemented in the `endless-runner-core` working tree:
+
+- Added `gameplay/movement/player_movement.gd`.
+- `PlayerMovement` extends `CharacterBody3D` and owns physical lateral movement on the player root.
+- Added `bind_dependencies(lane_system, player_controller)` to connect the movement component to the logical lane system and player-state controller.
+- Added `request_lane_change(direction)` as the entry point for lane-change input. It validates dependencies and permitted player state before forwarding the request to `LaneSystem`.
+- Subscribed to `LaneSystem.lane_changed`; logical lane changes update the physical X target immediately without snapping the player's current position.
+- Added configurable `lane_change_duration`, defaulting to 0.18 seconds.
+- Lateral speed is derived from `LaneSystem.lane_width / lane_change_duration` (approximately 11.11 m/s with the default 2.0 m lane width).
+- Consecutive requests update the destination during movement. A request in the opposite direction reverses movement from the current physical position.
+- The final step is limited to the remaining distance and the player's X position is corrected to the exact lane centre.
+- Longitudinal Z velocity is set to zero; existing vertical Y velocity is preserved for later jump/fall integration.
+- Lateral input and movement are blocked in READY, PAUSED, FINISHED, HIT and DEAD. RUNNING, JUMPING, FALLING and SLIDING are permitted when `PlayerController.control_enabled` is true.
+- Added `tests/test_player_movement.gd` and the temporary test scene `tests/player_movement_test.tscn`.
+
+Validation performed:
+
+- The implementation and test files were copied into the separate `endless-runner-core-test` Godot project.
+- The test scene executed successfully in Godot 4.7.2.
+- Output confirmed: `PASS: PlayerMovement tests completed successfully (40 assertions).`
+
+Scope and integration status:
+
+- Sprint 2.4.2 implements physical lateral movement only. It does not implement jump, fall, landing or slide physics.
+- `LaneSystem` remains responsible for logical lane selection; `PlayerController` remains responsible for player states and the input buffer.
+- No SANTA DASH gameplay scene, character asset, or game-specific gameplay script was changed for Sprint 2.4.2.
+- SANTA DASH continues to reference the Core submodule release `v0.1.0`; this unreleased working-tree update is not included in that pinned release.
+
 ### General Implementation Status
 
 - No production artistic assets have been imported.
-- Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer) and LaneSystem are the only Core gameplay systems implemented so far.
+- Implemented Core gameplay systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem and PlayerMovement (lateral movement).
 - The Lane System implementation, tests and documentation are committed and pushed to the Core repository.
+- Sprint 2.4.1 implementation and documentation are committed and pushed to the Core repository; the corresponding SANTA DASH development log is also committed and pushed.
+- Sprint 2.4.2 implementation and tests are functionally validated; documentation and repository commits are pending.
 
 ---
 
