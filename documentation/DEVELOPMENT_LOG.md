@@ -6,7 +6,7 @@
 - Engine: Godot 4.7.2-stable
 - Language: Typed GDScript
 - Current phase: Phase 2 — Core Gameplay Systems
-- Current sprint: Sprint 2.2 — Player Controller
+- Current sprint: Sprint 2.3 — Lane System
 
 ---
 
@@ -166,7 +166,7 @@ Integration status:
 
 #### Sprint 2.2 — Player Controller
 
-**Status: Implemented in the Core working tree and functionally tested in the temporary Godot test project. Core commit and push are pending.**
+**Status: Implemented, documented, tested, committed and pushed to the Core repository.**
 
 Implemented in the `endless-runner-core` working tree:
 
@@ -194,11 +194,44 @@ Scope and integration status:
 - SANTA DASH still references Core submodule release `v0.1.0`; the Sprint 2.2 implementation is not included in that pinned release.
 - No SANTA DASH gameplay scene, character asset, or game-specific gameplay script was changed for Sprint 2.2.
 
+#### Sprint 2.3 — Lane System
+
+**Status: Implemented in the Core working tree and functionally tested in the temporary Godot test project. Core commit and push are pending.**
+
+Implemented in the `endless-runner-core` working tree:
+
+- `gameplay/lanes/lane_system.gd`
+- `Lane` enum: LEFT (-1), CENTER (0) and RIGHT (+1).
+- CENTER as the initial logical lane.
+- Configurable `lane_width`, defaulting to 2.0 metres.
+- X-coordinate calculation for each lane.
+- Immediate logical lane updates for accepted requests.
+- Rejection of invalid directions and requests beyond the left/right boundaries.
+- Consecutive requests evaluated against the latest logical lane.
+- Signals: `lane_change_requested` and `lane_changed`.
+- `reset_lane()` to return to CENTER.
+- `tests/test_lane_system.gd`.
+
+Validation performed:
+
+- The implementation and test script were copied into the separate `endless-runner-core-test` Godot project.
+- The test covered initial lane, lane coordinates, configurable width, accepted and rejected requests, immediate logical updates, consecutive requests, signal counts and reset behavior.
+- Output confirmed: `PASS: LaneSystem tests completed successfully (25 assertions).`
+
+Scope and integration status:
+
+- LaneSystem manages logical lane state only.
+- It does not move a player node, interpolate transforms, read input actions, or depend on PlayerController.
+- Physical lateral movement and smooth destination changes remain for the Movement System in Sprint 2.4.
+- LaneSystem has not yet been integrated into the SANTA DASH gameplay scene.
+- SANTA DASH still references Core submodule release `v0.1.0`; the Sprint 2.3 implementation is not included in that pinned release.
+- No SANTA DASH gameplay scene, character asset, or game-specific gameplay script was changed for Sprint 2.3.
+
 ### General Implementation Status
 
 - No production artistic assets have been imported.
-- Game Flow Manager and Player Controller are the only Core gameplay systems implemented so far.
-- The next planned Core system is the Lane System, after Sprint 2.2 documentation, review, commit, and push are complete.
+- Game Flow Manager, Player Controller and LaneSystem are the only Core gameplay systems implemented so far.
+- The Lane System is implemented and tested in the Core working tree. Its documentation and repository changes are being prepared for commit and push.
 
 ---
 
