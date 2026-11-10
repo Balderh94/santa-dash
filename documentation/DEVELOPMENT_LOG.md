@@ -6,7 +6,7 @@
 - Engine: Godot 4.7.2-stable
 - Language: Typed GDScript
 - Current phase: Phase 2 — Core Gameplay Systems
-- Current sprint: Sprint 2.3 — Lane System
+- Current sprint: Sprint 2.4 — Player Movement
 
 ---
 
@@ -196,7 +196,7 @@ Scope and integration status:
 
 #### Sprint 2.3 — Lane System
 
-**Status: Implemented in the Core working tree and functionally tested in the temporary Godot test project. Core commit and push are pending.**
+**Status: Implemented, tested, documented, committed and pushed to the Core repository.**
 
 Implemented in the `endless-runner-core` working tree:
 
@@ -227,11 +227,42 @@ Scope and integration status:
 - SANTA DASH still references Core submodule release `v0.1.0`; the Sprint 2.3 implementation is not included in that pinned release.
 - No SANTA DASH gameplay scene, character asset, or game-specific gameplay script was changed for Sprint 2.3.
 
+#### Sprint 2.4.1 — Input Buffer
+
+**Status: Implemented, documented and functionally tested in the temporary Godot test project. Repository commits and push are pending.**
+
+Updated in the `endless-runner-core` working tree:
+
+- Replaced the Sprint 2.2 single-slot pending-action queue with a one-slot, time-limited Input Buffer in `player/controllers/player_controller.gd`.
+- Added the `BufferedAction` enum: `NONE`, `JUMP` and `SLIDE`.
+- Added the configurable `input_buffer_duration`, defaulting to 0.15 seconds.
+- Added read-only access to `buffered_action` and `input_buffer_time_remaining`.
+- The latest valid buffered input replaces the previous entry, including repeated input of the same action.
+- A slide can be buffered while the player is `JUMPING` or `FALLING`; a jump can be buffered while `SLIDING`.
+- The buffer lifetime is updated by `_physics_process(delta)` while the game is running and expires when the configured window elapses.
+- The buffer and its remaining lifetime are preserved while the Game Flow state is `PAUSED`.
+- Hit, death and player reset clear the buffer.
+- Added/updated `tests/test_player_controller.gd` to cover buffer replacement, expiration, pause preservation, action chaining, interruption, death and Game Flow behavior.
+
+Validation performed:
+
+- The updated implementation and test script were copied into the separate `endless-runner-core-test` Godot project.
+- The first test run exposed an outdated assertion that expected a repeated buffered request to be rejected. The test expectation was corrected to match the approved latest-input-replaces-previous rule.
+- The updated test then completed successfully.
+- Output confirmed: `PASS: PlayerController tests completed successfully.`
+
+Scope and integration status:
+
+- The Input Buffer manages logical input retention only. It does not implement physical jump or slide movement.
+- Physical action timing, movement compatibility and execution remain responsibilities of the upcoming Movement System work.
+- No SANTA DASH gameplay scene, character asset, or game-specific gameplay script was changed for Sprint 2.4.1.
+- SANTA DASH continues to reference the Core submodule release `v0.1.0`; this unreleased working-tree update is not included in that pinned release.
+
 ### General Implementation Status
 
 - No production artistic assets have been imported.
-- Game Flow Manager, Player Controller and LaneSystem are the only Core gameplay systems implemented so far.
-- The Lane System is implemented and tested in the Core working tree. Its documentation and repository changes are being prepared for commit and push.
+- Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer) and LaneSystem are the only Core gameplay systems implemented so far.
+- The Lane System implementation, tests and documentation are committed and pushed to the Core repository.
 
 ---
 
