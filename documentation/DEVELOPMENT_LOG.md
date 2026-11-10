@@ -6,7 +6,7 @@
 - Engine: Godot 4.7.2-stable
 - Language: Typed GDScript
 - Current phase: Phase 2 — Core Gameplay Systems
-- Current sprint: Sprint 2.4 — Player Movement
+- Current sprint: Sprint 2.4.4 — Animation Configuration and Controller
 
 ---
 
@@ -292,7 +292,7 @@ Scope and integration status:
 
 #### Sprint 2.4.3 — Jump and Slide Movement
 
-**Status: Implemented and functionally tested in the temporary Godot test project. Documentation is being updated; repository commits and push are pending.**
+**Status: Implemented and functionally tested in the temporary Godot test project. Documentation is updated in this revision; repository commits and push are pending.**
 
 Updated in the `endless-runner-core` working tree:
 
@@ -311,7 +311,7 @@ Updated in the `endless-runner-core` working tree:
 - If a physics body blocks standing clearance, the reduced capsule remains active and the query is retried every physics frame. This does not create HIT or complete the slide.
 - HIT blocks lateral control but keeps gravity and floor collision active. Landing during HIT does not automatically recover the HIT state.
 - PAUSED freezes physical simulation and preserves velocity. DEAD stops physical movement.
-- Extended `tests/test_player_movement.gd` and `tests/player_movement_test.tscn` for jump/slide, capsule, clearance, input-buffer chaining and state validation.
+- Extended `tests/test_player_movement.gd` for jump/slide, capsule, clearance, input-buffer chaining and state validation. The test scene `player_movement_test.tscn` was temporary and remained in the separate `endless-runner-core-test` project.
 
 Validation performed:
 
@@ -326,14 +326,51 @@ Scope and integration status:
 - The physical player origin is expected to be at foot level, with a direct-child `CollisionShape3D` using a vertical `CapsuleShape3D`.
 - SANTA DASH continues to reference the Core submodule release `v0.1.0`; this unreleased working-tree update is not included in that pinned release.
 
+#### Sprint 2.4.4 — Animation Configuration and Controller
+
+**Status: Implemented and functionally tested in the temporary Godot test project. Documentation is updated in this revision; repository commits and push are pending.**
+
+Implemented in the `endless-runner-core` working tree:
+
+- Added `player/resources/animation_config.gd` with the `AnimationConfig` Resource.
+- Added optional `StringName` clip properties for `running_animation`, `jumping_animation`, `falling_animation`, `sliding_animation`, `hit_animation`, `death_animation`, `land_animation`, `idle_animation` and `victory_animation`.
+- Added configurable `crossfade_duration`, defaulting to 0.15 seconds.
+- Added `player/controllers/animation_controller.gd` with the `AnimationController` Node.
+- Added `setup()` to validate and bind `PlayerController`, `AnimationPlayer` and `AnimationConfig`, connect state and animation-finished signals, and start the animation associated with the current logical state when a valid clip is available.
+- Added `bind_player_movement()` to connect `PlayerMovement.player_landed` to the configured `land_animation`.
+- Added `play_animation_event()` for existing non-looping event clips and `clear_setup()` for disconnecting signals and clearing dependencies.
+- Added state-to-clip mapping for `IDLE`, `RUNNING`, `JUMPING`, `FALLING`, `SLIDING`, `HIT` and `DEAD`.
+- Added configurable crossfade playback, missing/empty clip handling, loop-configuration warnings, one-shot event completion through `AnimationPlayer.animation_finished`, and restoration of the animation for the current logical state after an event.
+- Event playback is rejected while the logical player state is `HIT` or `DEAD`. A logical state change interrupts an active event.
+- Extended `gameplay/movement/player_movement.gd` with the parameterless `player_landed` signal. It is emitted after `notify_jump_finished()` when a confirmed landing occurs in `JUMPING` or `FALLING`; it is not emitted for landing while in `HIT`.
+- Added `tests/test_animation_controller.gd`.
+
+Validation performed:
+
+- `AnimationConfig` and `AnimationController` were copied into the separate `endless-runner-core-test` Godot project and recognized by Godot.
+- The AnimationController test used a technical `AnimationPlayer` with generated test clips; no production character model or artistic animation assets were required.
+- The test covered valid/invalid setup, state mapping, jump/fall/slide transitions, direct LAND playback, automatic LAND playback from `player_landed`, event completion and restoration, event interruption, HIT/DEAD priority, missing event clips and cleanup.
+- Output confirmed: `PASS: AnimationController tests completed successfully.` with 31 assertions and 0 failures.
+- The updated `PlayerMovement` test passed with 40 assertions after its test setup was updated to provide the required `CollisionShape3D` dependency.
+
+Scope and integration status:
+
+- `AnimationController` is a presentation component. It does not control movement, physics, collision handling or logical player states.
+- `LAND` is an animation event, not a new `PlayerController` state.
+- The landing-signal integration test emits `player_landed` directly to verify the connection and animation response. Physical landing detection remains covered separately by the PlayerMovement test.
+- No production player scene, character model, skeleton, or artistic animation clips have been created or integrated.
+- The Core repository does not contain a `project.godot` test project; tests run in the separate `endless-runner-core-test` project using copies of the Core scripts.
+- SANTA DASH continues to reference the Core submodule release `v0.1.0`; these working-tree changes are not included in that pinned release.
+
 ### General Implementation Status
 
 - No production artistic assets have been imported.
-- Implemented Core gameplay systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem and PlayerMovement (lateral movement, jump/fall/landing and slide physics).
+- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig and AnimationController.
 - The Lane System implementation, tests and documentation are committed and pushed to the Core repository.
 - Sprint 2.4.1 implementation and documentation are committed and pushed to the Core repository; the corresponding SANTA DASH development log is also committed and pushed.
 - Sprint 2.4.2 implementation, tests, documentation and repository commits are complete.
-- Sprint 2.4.3 jump/slide implementation and tests are functionally validated; documentation and repository commits are pending.
+- Sprint 2.4.3 jump/slide implementation and tests are functionally validated; documentation is updated in this revision and repository commits are pending.
+- Sprint 2.4.4 animation configuration, controller and landing-event integration are functionally validated; documentation is updated in this revision and repository commits are pending.
 
 ---
 
