@@ -6,7 +6,7 @@
 - Engine: Godot 4.7.2-stable
 - Language: Typed GDScript
 - Current phase: Phase 2 — Core Gameplay Systems
-- Current sprint: Sprint 2.5.1 — World Movement
+- Current sprint: Sprint 2.5.3 — Multi-segment World Movement Validation
 
 ---
 
@@ -364,7 +364,7 @@ Scope and integration status:
 
 #### Sprint 2.5.1 — World Movement
 
-**Status: Implemented, tested, copied into the Core working tree and documented in this revision. Core and Santa Dash documentation commits/pushes are pending.**
+**Status: Implemented, tested, documented, committed and pushed to Core and Santa Dash.**
 
 Implemented in the `endless-runner-core` working tree:
 
@@ -423,7 +423,37 @@ Validate the host-side coordination of the reusable `GameFlowManager` and `World
 
 - `GameFlowManager` and `WorldMovement` remain independent Core systems. The host game owns the signal connection and lifecycle mapping.
 - The integration test validates the connection pattern only. Production scene integration remains future work.
-- Sprint 2.5.2 does not change the published Core release `v0.2.0`; the integration test and documentation remain subsequent unreleased work.
+- The Core test and documentation commits, and the SANTA DASH development-log commit, were pushed successfully.
+- Sprint 2.5.2 does not change the published Core release `v0.2.0`; the integration test and documentation are committed working-tree additions but remain outside the published release.
+
+#### Sprint 2.5.3 — Multi-segment World Movement Validation
+
+**Status: Test passed with 37 assertions; test script copied into the Core working tree. Documentation and repository commits are pending.**
+
+**Objective**
+
+Validate that `WorldMovement` moves multiple explicitly registered segment roots consistently, without changing the production implementation or adding generation/pooling behavior.
+
+**Test implementation**
+
+- Added `tests/test_world_movement_segments.gd` to the Core working tree.
+- The test scene `world_movement_segments_test.tscn` remains exclusively in the temporary `endless-runner-core-test` project and must not be copied into Core or either game project.
+- The test uses four registered `Node3D` segment roots, an initial speed of 10 m/s, and a controlled 0.1-second simulation interval.
+- Verified simultaneous movement, 1.0 m positive-Z displacement per interval, preservation of local X/Y, cumulative displacement over three intervals, stop/resume speed preservation, runtime registration, runtime unregistration and immobility of a direct child that is never registered.
+- The test script was updated to leave the test window open after completion so Output and Debugger can be inspected.
+
+**Validation**
+
+- Executed the suite in `endless-runner-core-test`.
+- Result: `PASS: WorldMovement multi-segment tests completed successfully (37 assertions).`
+- The final output also confirmed that the test window remains open for manual inspection.
+
+**Scope and limitations**
+
+- This sprint adds test coverage only; no production `WorldMovement` behavior or public API was changed.
+- No segment generation, recycling, object pooling, difficulty integration or production gameplay scene integration was added.
+- The test uses technical `Node3D` nodes only; no artistic assets are required.
+
 
 ### General Implementation Status
 
@@ -436,7 +466,7 @@ Validate the host-side coordination of the reusable `GameFlowManager` and `World
 - Sprint 2.4.4 animation configuration, controller and landing-event integration, tests, documentation and repository commits are complete.
 - Core v0.2.0 is published; both SANTA DASH and GENERIC RUNNER submodules point to `v0.2.0`.
 - Sprint 2.5.1 WorldMovement is implemented and passed 67 assertions in the temporary test project; its implementation and documentation were committed and pushed.
-- Sprint 2.5.2 host-side GameFlowManager / WorldMovement integration test passed 52 assertions with zero Debugger errors; its test script and documentation are ready for commit.
+- Sprint 2.5.2 host-side GameFlowManager / WorldMovement integration test passed 52 assertions with zero Debugger errors; its Core test and documentation commits have been pushed, as has the SANTA DASH development-log update.
 
 ---
 
