@@ -6,7 +6,7 @@
 - Engine: Godot 4.7.2-stable
 - Language: Typed GDScript
 - Current phase: Phase 2 — Core Gameplay Systems
-- Current sprint: Sprint 2.5.4 — World Movement Lifecycle Validation
+- Current sprint: Sprint 2.6.1 — SegmentDefinition
 
 ---
 
@@ -428,7 +428,7 @@ Validate the host-side coordination of the reusable `GameFlowManager` and `World
 
 #### Sprint 2.5.3 — Multi-segment World Movement Validation
 
-**Status: Test passed with 37 assertions; test script copied into the Core working tree. Documentation and repository commits are pending.**
+**Status: Completed, documented, committed and pushed. Both repositories were subsequently confirmed published and clean.**
 
 **Objective**
 
@@ -457,7 +457,7 @@ Validate that `WorldMovement` moves multiple explicitly registered segment roots
 
 #### Sprint 2.5.4 — World Movement Lifecycle Validation
 
-**Status: Test passed with 76 assertions, zero errors and zero warnings; test script copied into the Core working tree. Documentation is updated; repository commits are pending.**
+**Status: Completed, documented, committed and pushed. Both repositories were subsequently confirmed published and clean.**
 
 **Objective**
 
@@ -486,6 +486,38 @@ Validate the lifecycle and cleanup behavior of `WorldMovement` without changing 
 - Core v0.2.0 remains the published release; this test and its documentation are unreleased working-tree changes.
 
 
+#### Sprint 2.6.1 — SegmentDefinition
+
+**Status: Implementation and automated test prepared; test passed with 24 assertions in the temporary Godot test project. Core repository copy and repository commits are pending confirmation.**
+
+**Objective**
+
+Create a reusable resource that describes a world segment and validates its resource-level configuration without introducing scene instantiation, pooling or spawning responsibilities.
+
+**Implementation**
+
+- Prepared `generation/segments/segment_definition.gd` with the `SegmentDefinition` class extending `Resource`.
+- Exported properties: `segment_id` (`StringName`), `is_enabled` (`bool`), `segment_scene` (`PackedScene`) and `segment_length` (`float`, default 30.0).
+- Implemented `get_validation_errors()` to report an empty identifier, missing scene reference and non-finite or non-positive length.
+- Implemented `is_valid()` as a convenience validation method.
+- `is_enabled` controls availability and does not determine whether the resource configuration is valid.
+- The resource does not instantiate scenes, modify the scene tree or depend on `SegmentPool`, `SegmentSpawner` or `WorldMovement`.
+- Prepared `tests/test_segment_definition.gd`. Its technical scene remains exclusively in `endless-runner-core-test`.
+
+**Validation**
+
+- Executed the suite in `endless-runner-core-test`.
+- Result: `PASS: SegmentDefinition tests completed successfully (24 assertions).`
+- Test groups covered valid definition, empty identifier, missing scene, invalid lengths, disabled definition and multiple validation errors.
+
+**Scope and limitations**
+
+- This subphase implements the segment data resource and its resource-level validation only.
+- Runtime validation of the instantiated scene root type is reserved for `SegmentPool`.
+- No segment pooling, spawning, procedural selection, track assembly or production-scene integration was implemented.
+- No production artistic assets were required.
+- The Core repository copy and repository commits must be confirmed before this subphase is marked fully published.
+
 ### General Implementation Status
 
 - No production artistic assets have been imported.
@@ -498,8 +530,9 @@ Validate the lifecycle and cleanup behavior of `WorldMovement` without changing 
 - Core v0.2.0 is published; both SANTA DASH and GENERIC RUNNER submodules point to `v0.2.0`.
 - Sprint 2.5.1 WorldMovement is implemented and passed 67 assertions in the temporary test project; its implementation and documentation were committed and pushed.
 - Sprint 2.5.2 host-side GameFlowManager / WorldMovement integration test passed 52 assertions with zero Debugger errors; its Core test and documentation commits have been pushed, as has the SANTA DASH development-log update.
-- Sprint 2.5.3 multi-segment WorldMovement validation passed 37 assertions; its test script is in the Core working tree. Documentation and repository commits remain pending.
-- Sprint 2.5.4 WorldMovement lifecycle validation passed 76 assertions with zero errors and zero warnings; its test script is in the Core working tree. Documentation has been updated; repository commits remain pending.
+- Sprint 2.5.3 multi-segment WorldMovement validation passed 37 assertions; documentation and repository changes were committed and pushed.
+- Sprint 2.5.4 WorldMovement lifecycle validation passed 76 assertions with zero errors and zero warnings; documentation and repository changes were committed and pushed.
+- Sprint 2.6.1 SegmentDefinition passed 24 assertions in the temporary test project. Implementation and test files were delivered; copying them into Core and committing/pushing the updated documentation remain pending confirmation.
 
 ---
 
