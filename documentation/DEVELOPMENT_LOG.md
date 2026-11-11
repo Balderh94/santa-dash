@@ -6,7 +6,7 @@
 - Engine: Godot 4.7.2-stable
 - Language: Typed GDScript
 - Current phase: Phase 2 — Core Gameplay Systems
-- Current sprint: Sprint 2.6.3.1 — SegmentSpawner Configuration and Sequence
+- Current sprint: Sprint 2.6.3.2.1 — First Segment and Initial Anchor
 
 ---
 
@@ -595,10 +595,49 @@ Implement the first SegmentSpawner increment: validate its host dependencies and
 - No production artistic assets were required.
 - Core `v0.2.0` remains the published release; this implementation is unreleased.
 
+#### Sprint 2.6.3.2.1 — First Segment and Initial Anchor
+
+**Status: Implementation passed the temporary Godot test project with 117 assertions and no reported errors. Core repository copy and documentation commits are pending confirmation.**
+
+**Objective**
+
+Extend `SegmentSpawner` to acquire and place the first segment from the configured sequence, aligning its `EntryPoint` with the approved initial anchor: the identity local transform of `WorldRoot`.
+
+**Implementation**
+
+- Extended `generation/spawning/segment_spawner.gd` while preserving the configuration and cyclic-sequence API from Sprint 2.6.3.1.
+- Added `spawn_first_segment()`.
+- The method requires a valid configuration, an empty active-segment list, a valid `WorldRoot` inside the scene tree and an identity local transform on `WorldRoot`.
+- Acquires the current definition's scene from `SegmentPool` using `SegmentPool.acquire(definition.segment_id)`.
+- Validates that the acquired `Node3D` root contains direct-child nodes named `EntryPoint` and `ExitPoint`, both of type `Marker3D`.
+- Calculates the segment root's local transform as the affine inverse of the `EntryPoint` local transform. With the approved identity `WorldRoot` anchor, this places the marker at the `WorldRoot` global transform.
+- Adds the segment as a direct child of `WorldRoot`, verifies the marker alignment, tracks the active segment and advances the sequence only after successful placement.
+- Added the `segment_spawned(segment, definition)` signal.
+- Added `get_active_segment_count()` and `get_active_segments()`; the latter returns a copy of the ordered active references.
+- Failed placement emits `spawning_error`, does not advance the sequence and attempts to detach and return the acquired instance to `SegmentPool`.
+- A duplicate first-segment request is rejected while an active segment is tracked.
+- Expanded `tests/test_segment_spawner.gd`. The technical test scene remains exclusively in `endless-runner-core-test`.
+
+**Validation**
+
+- Executed the suite in `endless-runner-core-test`.
+- Result: `PASS: SegmentSpawner tests completed successfully (117 assertions).`
+- The user reported no errors.
+- Coverage includes prior configuration and sequence tests, first-segment placement at the origin, required marker presence and type checks, rejection of a non-invertible EntryPoint transform, rejection of a non-identity WorldRoot anchor, duplicate first-segment request rejection, pool rollback and sequence preservation after failure.
+
+**Scope and limitations**
+
+- This subphase places only the first segment at the initial anchor.
+- It does not yet place a second or third segment or align a new `EntryPoint` with the previous segment's `ExitPoint`.
+- It does not validate `segment_length` against marker spacing.
+- It does not register the placed segment with `WorldMovement`, recycle segments or integrate with a production game scene.
+- No production artistic assets were required.
+- Core `v0.2.0` remains the published release; this implementation is unreleased.
+
 ### General Implementation Status
 
 - No production artistic assets have been imported.
-- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition, SegmentPool and SegmentSpawner configuration/sequence.
+- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition, SegmentPool and SegmentSpawner configuration/sequence/first-segment placement.
 - The Lane System implementation, tests and documentation are committed and pushed to the Core repository.
 - Sprint 2.4.1 implementation and documentation are committed and pushed to the Core repository; the corresponding SANTA DASH development log is also committed and pushed.
 - Sprint 2.4.2 implementation, tests, documentation and repository commits are complete.
@@ -611,7 +650,8 @@ Implement the first SegmentSpawner increment: validate its host dependencies and
 - Sprint 2.5.4 WorldMovement lifecycle validation passed 76 assertions with zero errors and zero warnings; documentation and repository changes were committed and pushed.
 - Sprint 2.6.1 SegmentDefinition passed 24 assertions; implementation, test and documentation were committed and pushed. Both repositories were confirmed published and clean.
 - Sprint 2.6.2 SegmentPool passed 81 assertions with no reported errors in the temporary test project. Implementation, test and documentation were committed and pushed; both repositories were confirmed published and clean.
-- Sprint 2.6.3.1 SegmentSpawner configuration and cyclic sequence passed 53 assertions in the temporary test project. Documentation has been updated; repository publication remains pending confirmation.
+- Sprint 2.6.3.1 SegmentSpawner configuration and cyclic sequence passed 53 assertions in the temporary test project. Implementation and documentation were published; both repositories were confirmed clean.
+- Sprint 2.6.3.2.1 SegmentSpawner first-segment placement at the WorldRoot origin passed 117 assertions with no reported errors in the temporary test project. Core repository copy and documentation commits remain pending confirmation.
 
 ---
 
