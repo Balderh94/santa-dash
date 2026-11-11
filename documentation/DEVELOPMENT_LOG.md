@@ -6,7 +6,7 @@
 - Engine: Godot 4.7.2-stable
 - Language: Typed GDScript
 - Current phase: Phase 2 — Core Gameplay Systems
-- Current sprint: Sprint 2.4.4 — Animation Configuration and Controller
+- Current sprint: Sprint 2.5.1 — World Movement
 
 ---
 
@@ -292,7 +292,7 @@ Scope and integration status:
 
 #### Sprint 2.4.3 — Jump and Slide Movement
 
-**Status: Implemented and functionally tested in the temporary Godot test project. Documentation is updated in this revision; repository commits and push are pending.**
+**Status: Implemented, functionally tested, documented, committed and pushed to the Core repository; the Santa Dash development log was committed and pushed.**
 
 Updated in the `endless-runner-core` working tree:
 
@@ -328,7 +328,7 @@ Scope and integration status:
 
 #### Sprint 2.4.4 — Animation Configuration and Controller
 
-**Status: Implemented and functionally tested in the temporary Godot test project. Documentation is updated in this revision; repository commits and push are pending.**
+**Status: Implemented, functionally tested, documented, committed and pushed to the Core repository; the Santa Dash development log was committed and pushed.**
 
 Implemented in the `endless-runner-core` working tree:
 
@@ -362,15 +362,51 @@ Scope and integration status:
 - The Core repository does not contain a `project.godot` test project; tests run in the separate `endless-runner-core-test` project using copies of the Core scripts.
 - SANTA DASH continues to reference the Core submodule release `v0.1.0`; these working-tree changes are not included in that pinned release.
 
+#### Sprint 2.5.1 — World Movement
+
+**Status: Implemented, tested, copied into the Core working tree and documented in this revision. Core and Santa Dash documentation commits/pushes are pending.**
+
+Implemented in the `endless-runner-core` working tree:
+
+- Added `gameplay/movement/world_movement.gd` with the `WorldMovement` Node.
+- Added exported `world_root` and configurable `initial_speed` (default 10.0 m/s).
+- Added read-only `current_speed`, `movement_active` and `registered_segment_count` properties.
+- Added `bind_world_root()` to validate and bind a `WorldRoot` that is a direct sibling of `WorldMovement` in the scene tree.
+- Added `register_segment()` and `unregister_segment()`; only live, in-tree, non-queued direct children of the bound `WorldRoot` are accepted, and duplicate registrations are rejected.
+- Added `start_movement()`, `stop_movement()`, `set_speed()` and `get_speed()`.
+- Added `movement_started`, `movement_stopped` and `speed_changed(previous_speed, new_speed)` signals.
+- Implemented local positive-Z translation in `_physics_process(delta)` using `current_speed * delta`, preserving each segment's local X and Y coordinates.
+- Speed changes reject negative and non-finite values. Stopping preserves the current speed; no automatic acceleration is implemented.
+- Registered segments are removed automatically when they leave the scene tree. If `WorldRoot` exits the tree, movement stops and registrations are cleared.
+- Rebinding to a different `WorldRoot` stops movement and clears prior registrations.
+- Added `tests/test_world_movement.gd`. The technical scene `world_movement_test.tscn` remains exclusively in the temporary `endless-runner-core-test` project and is not copied into Core.
+
+Validation performed:
+
+- The implementation and test script were copied into the separate `endless-runner-core-test` Godot project.
+- The test suite covered registration, movement, speed validation, unregistering, rebinding and deferred cleanup.
+- The final diagnostic run completed all test groups and confirmed: `PASS: WorldMovement tests completed successfully (67 assertions).`
+- The technical test scene used `Node3D` nodes only; no production models, materials, textures or other art assets were required.
+
+Scope and integration status:
+
+- `WorldMovement` moves only explicitly registered segment roots. It does not create, recycle or pool segments.
+- `WorldMovement` does not move the player, change lanes, jump, slide, spawn obstacles, detect collisions or calculate difficulty.
+- `WorldMovement` and `WorldRoot` must be direct siblings; registered segment roots must be direct children of `WorldRoot`. `WorldRoot` should keep an identity transform so its local positive Z axis matches the intended longitudinal direction.
+- No production gameplay scene or game-specific SANTA DASH script was changed.
+- Core v0.2.0 is published. Santa Dash and Generic Runner submodules have both been updated to the `v0.2.0` tag. Sprint 2.5.1 is a subsequent Core working-tree change and is not included in that release.
+
 ### General Implementation Status
 
 - No production artistic assets have been imported.
-- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig and AnimationController.
+- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController and WorldMovement.
 - The Lane System implementation, tests and documentation are committed and pushed to the Core repository.
 - Sprint 2.4.1 implementation and documentation are committed and pushed to the Core repository; the corresponding SANTA DASH development log is also committed and pushed.
 - Sprint 2.4.2 implementation, tests, documentation and repository commits are complete.
-- Sprint 2.4.3 jump/slide implementation and tests are functionally validated; documentation is updated in this revision and repository commits are pending.
-- Sprint 2.4.4 animation configuration, controller and landing-event integration are functionally validated; documentation is updated in this revision and repository commits are pending.
+- Sprint 2.4.3 jump/slide implementation, tests, documentation and repository commits are complete.
+- Sprint 2.4.4 animation configuration, controller and landing-event integration, tests, documentation and repository commits are complete.
+- Core v0.2.0 is published; both SANTA DASH and GENERIC RUNNER submodules point to `v0.2.0`.
+- Sprint 2.5.1 WorldMovement is implemented and passed 67 assertions in the temporary test project; its Core and SANTA DASH documentation commits are pending.
 
 ---
 
