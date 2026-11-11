@@ -6,7 +6,7 @@
 - Engine: Godot 4.7.2-stable
 - Language: Typed GDScript
 - Current phase: Phase 2 — Core Gameplay Systems
-- Current sprint: Sprint 2.6.1 — SegmentDefinition
+- Current sprint: Sprint 2.6.2 — SegmentPool
 
 ---
 
@@ -488,7 +488,7 @@ Validate the lifecycle and cleanup behavior of `WorldMovement` without changing 
 
 #### Sprint 2.6.1 — SegmentDefinition
 
-**Status: Implementation and automated test prepared; test passed with 24 assertions in the temporary Godot test project. Core repository copy and repository commits are pending confirmation.**
+**Status: Completed, documented, committed and pushed to the Core repository and SANTA DASH repository. Both repositories were confirmed published and clean.**
 
 **Objective**
 
@@ -516,12 +516,50 @@ Create a reusable resource that describes a world segment and validates its reso
 - Runtime validation of the instantiated scene root type is reserved for `SegmentPool`.
 - No segment pooling, spawning, procedural selection, track assembly or production-scene integration was implemented.
 - No production artistic assets were required.
-- The Core repository copy and repository commits must be confirmed before this subphase is marked fully published.
+- The implementation, test script and updated documentation were committed and pushed. The user confirmed both repositories were published and clean.
+
+#### Sprint 2.6.2 — SegmentPool
+
+**Status: Implementation and automated test passed in the temporary Godot test project with 81 assertions. Core repository copy and documentation commits are pending confirmation.**
+
+**Objective**
+
+Implement a reusable pool that owns instances created from registered `SegmentDefinition` resources. The pool is independent of segment placement, sequence selection and world movement.
+
+**Implementation**
+
+- Prepared `generation/pooling/segment_pool.gd` with the `SegmentPool` class extending `Node`.
+- Each registered `segment_id` has an independent pool entry.
+- Default prewarming is two instances per definition; default maximum capacity is eight instances per definition. Both values are configurable in `register_definition()`.
+- `register_definition()` validates the resource, identifier, limits and duplicate registrations. Valid disabled definitions may be registered without prewarming.
+- `acquire()` returns an unparented `Node3D`, reuses an available instance first, and creates instances on demand up to the configured maximum.
+- `release()` requires the caller to detach the node from its parent first. Invalid, foreign, duplicate, queued-for-deletion and still-parented instances are rejected.
+- Returned instances remain available for reuse. The pool does not shrink automatically.
+- Count and registration queries are provided. `clear()` frees available and acquired instances and removes all registrations. `_exit_tree()` invokes `clear()`.
+- The instantiated scene root must inherit `Node3D`.
+- Signals: `segment_acquired`, `segment_released` and `pool_error`.
+- The pool does not place segments, select their order, create sequences or register them with `WorldMovement`.
+- Prepared `tests/test_segment_pool.gd`. The technical test scene remains exclusively in `endless-runner-core-test`.
+
+**Validation**
+
+- Executed the suite in `endless-runner-core-test`.
+- Result: `PASS: SegmentPool tests completed successfully (81 assertions).`
+- No errors were reported.
+- Test groups covered registration and prewarming, acquisition and capacity, release and reuse, registration validation, disabled definitions, independent definition pools, invalid scene roots, and clear/cleanup.
+
+**Scope and limitations**
+
+- This subphase implements instance pooling and reuse only.
+- `SegmentSpawner`, explicit segment sequencing, track assembly, procedural selection and production-scene integration remain unimplemented.
+- No production artistic assets were required.
+- The Core repository copy and documentation commits must be confirmed before this subphase is marked fully published.
+- Core `v0.2.0` remains the published release; `SegmentPool` is unreleased working-tree functionality.
 
 ### General Implementation Status
 
 - No production artistic assets have been imported.
-- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController and WorldMovement.
+- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition and SegmentPool.
 - The Lane System implementation, tests and documentation are committed and pushed to the Core repository.
 - Sprint 2.4.1 implementation and documentation are committed and pushed to the Core repository; the corresponding SANTA DASH development log is also committed and pushed.
 - Sprint 2.4.2 implementation, tests, documentation and repository commits are complete.
@@ -532,7 +570,8 @@ Create a reusable resource that describes a world segment and validates its reso
 - Sprint 2.5.2 host-side GameFlowManager / WorldMovement integration test passed 52 assertions with zero Debugger errors; its Core test and documentation commits have been pushed, as has the SANTA DASH development-log update.
 - Sprint 2.5.3 multi-segment WorldMovement validation passed 37 assertions; documentation and repository changes were committed and pushed.
 - Sprint 2.5.4 WorldMovement lifecycle validation passed 76 assertions with zero errors and zero warnings; documentation and repository changes were committed and pushed.
-- Sprint 2.6.1 SegmentDefinition passed 24 assertions in the temporary test project. Implementation and test files were delivered; copying them into Core and committing/pushing the updated documentation remain pending confirmation.
+- Sprint 2.6.1 SegmentDefinition passed 24 assertions; implementation, test and documentation were committed and pushed. Both repositories were confirmed published and clean.
+- Sprint 2.6.2 SegmentPool passed 81 assertions with no reported errors in the temporary test project. Implementation and test files were delivered; Core repository copy and documentation commits remain pending confirmation.
 
 ---
 
