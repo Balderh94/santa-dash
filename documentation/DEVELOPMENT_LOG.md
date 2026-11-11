@@ -396,6 +396,35 @@ Scope and integration status:
 - No production gameplay scene or game-specific SANTA DASH script was changed.
 - Core v0.2.0 is published. Santa Dash and Generic Runner submodules have both been updated to the `v0.2.0` tag. Sprint 2.5.1 is a subsequent Core working-tree change and is not included in that release.
 
+
+
+#### Sprint 2.5.2 — Game Flow and World Movement Integration
+
+**Objective**
+
+Validate the host-side coordination of the reusable `GameFlowManager` and `WorldMovement` systems without introducing a direct dependency between them.
+
+**Implementation and test scope**
+
+- Added `tests/test_world_movement_integration.gd` to the Core repository test suite.
+- The temporary `endless-runner-core-test` project contains the technical test scene `world_movement_integration_test.tscn`; this scene is test-only and must not be copied into the Core repository or either game project.
+- The test harness acts as the host layer: it connects `GameFlowManager.state_changed` and starts world movement only for `RUNNING`; it stops world movement for `READY`, `PAUSED` and `FINISHED`.
+- Verified that pausing and finishing preserve the configured movement speed, and that resuming starts movement again at that speed.
+- No production gameplay scene, game-specific integration script, generation system, pooling system or difficulty system was added in this sprint.
+
+**Validation**
+
+- Executed the integration suite in `endless-runner-core-test`.
+- All test groups passed: initial `READY`, `READY → RUNNING`, `RUNNING → PAUSED`, `PAUSED → RUNNING`, `RUNNING → FINISHED → READY`, and `FINISHED` from `PAUSED`.
+- Result: `PASS: GameFlowManager + WorldMovement integration tests completed successfully (52 assertions).`
+- Godot Debugger reported zero errors.
+
+**Architectural result**
+
+- `GameFlowManager` and `WorldMovement` remain independent Core systems. The host game owns the signal connection and lifecycle mapping.
+- The integration test validates the connection pattern only. Production scene integration remains future work.
+- Sprint 2.5.2 does not change the published Core release `v0.2.0`; the integration test and documentation remain subsequent unreleased work.
+
 ### General Implementation Status
 
 - No production artistic assets have been imported.
@@ -406,7 +435,8 @@ Scope and integration status:
 - Sprint 2.4.3 jump/slide implementation, tests, documentation and repository commits are complete.
 - Sprint 2.4.4 animation configuration, controller and landing-event integration, tests, documentation and repository commits are complete.
 - Core v0.2.0 is published; both SANTA DASH and GENERIC RUNNER submodules point to `v0.2.0`.
-- Sprint 2.5.1 WorldMovement is implemented and passed 67 assertions in the temporary test project; its Core and SANTA DASH documentation commits are pending.
+- Sprint 2.5.1 WorldMovement is implemented and passed 67 assertions in the temporary test project; its implementation and documentation were committed and pushed.
+- Sprint 2.5.2 host-side GameFlowManager / WorldMovement integration test passed 52 assertions with zero Debugger errors; its test script and documentation are ready for commit.
 
 ---
 
