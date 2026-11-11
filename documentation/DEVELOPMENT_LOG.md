@@ -6,7 +6,7 @@
 - Engine: Godot 4.7.2-stable
 - Language: Typed GDScript
 - Current phase: Phase 2 — Core Gameplay Systems
-- Current sprint: Sprint 2.6.2 — SegmentPool
+- Current sprint: Sprint 2.6.3.1 — SegmentSpawner Configuration and Sequence
 
 ---
 
@@ -520,7 +520,7 @@ Create a reusable resource that describes a world segment and validates its reso
 
 #### Sprint 2.6.2 — SegmentPool
 
-**Status: Implementation and automated test passed in the temporary Godot test project with 81 assertions. Core repository copy and documentation commits are pending confirmation.**
+**Status: Completed, documented, committed and pushed. Both repositories were confirmed published and clean.**
 
 **Objective**
 
@@ -553,13 +553,52 @@ Implement a reusable pool that owns instances created from registered `SegmentDe
 - This subphase implements instance pooling and reuse only.
 - `SegmentSpawner`, explicit segment sequencing, track assembly, procedural selection and production-scene integration remain unimplemented.
 - No production artistic assets were required.
-- The Core repository copy and documentation commits must be confirmed before this subphase is marked fully published.
-- Core `v0.2.0` remains the published release; `SegmentPool` is unreleased working-tree functionality.
+- The implementation, test script and updated documentation were committed and pushed. Both repositories were confirmed published and clean.
+- Core `v0.2.0` remains the published release; `SegmentPool` is unreleased functionality.
+
+#### Sprint 2.6.3.1 — SegmentSpawner Configuration and Sequence
+
+**Status: Configuration and sequence implementation passed the temporary Godot test project with 53 assertions. Documentation has been updated; repository publication remains pending confirmation.**
+
+**Objective**
+
+Implement the first SegmentSpawner increment: validate its host dependencies and an explicit ordered sequence of `SegmentDefinition` resources, then expose controlled cyclic sequence access. Active segment instantiation, placement and recycling are deliberately deferred.
+
+**Implementation**
+
+- Prepared `generation/spawning/segment_spawner.gd` with `SegmentSpawner` extending `Node`.
+- Added `configure(world_root, segment_pool, world_movement, sequence)`.
+- Configuration requires valid dependencies inside the scene tree.
+- `WorldMovement` must already be bound to the supplied `WorldRoot`; both must be direct siblings.
+- Every sequence entry must be a valid, enabled `SegmentDefinition` already registered in the supplied `SegmentPool`.
+- Empty sequences, invalid definitions, disabled definitions, unregistered definitions and invalid dependencies are rejected through the `spawning_error` signal.
+- Configuration is transactional: a failed reconfiguration preserves the previous valid configuration and current sequence index.
+- Added `get_next_definition()` to read the current entry without advancing.
+- Added `advance_sequence()` to advance and wrap cyclically.
+- Added `reset_sequence()` to return the index to zero.
+- Added read-only `is_configured`, `sequence_index` and `sequence_length` properties.
+- Repeated definitions are permitted and retain their explicit positions in the sequence.
+- Prepared `tests/test_segment_spawner.gd`. The technical test scene remains exclusively in `endless-runner-core-test`.
+
+**Validation**
+
+- Executed the suite in `endless-runner-core-test`.
+- Result: `PASS: SegmentSpawner tests completed successfully (53 assertions).`
+- The user reported no errors.
+- Test groups covered valid configuration, cyclic sequence, reset, empty sequence, invalid and disabled definitions, unregistered definitions, invalid dependencies, transactional reconfiguration and repeated definitions.
+
+**Scope and limitations**
+
+- This subphase implements dependency/sequence configuration only.
+- It does not acquire instances from `SegmentPool`, add segments to `WorldRoot`, align `EntryPoint` and `ExitPoint`, register spawned nodes with `WorldMovement`, or recycle segments.
+- Marker-based placement and active segment lifecycle are reserved for subsequent Sprint 2.6.3 subphases.
+- No production artistic assets were required.
+- Core `v0.2.0` remains the published release; this implementation is unreleased.
 
 ### General Implementation Status
 
 - No production artistic assets have been imported.
-- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition and SegmentPool.
+- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition, SegmentPool and SegmentSpawner configuration/sequence.
 - The Lane System implementation, tests and documentation are committed and pushed to the Core repository.
 - Sprint 2.4.1 implementation and documentation are committed and pushed to the Core repository; the corresponding SANTA DASH development log is also committed and pushed.
 - Sprint 2.4.2 implementation, tests, documentation and repository commits are complete.
@@ -571,7 +610,8 @@ Implement a reusable pool that owns instances created from registered `SegmentDe
 - Sprint 2.5.3 multi-segment WorldMovement validation passed 37 assertions; documentation and repository changes were committed and pushed.
 - Sprint 2.5.4 WorldMovement lifecycle validation passed 76 assertions with zero errors and zero warnings; documentation and repository changes were committed and pushed.
 - Sprint 2.6.1 SegmentDefinition passed 24 assertions; implementation, test and documentation were committed and pushed. Both repositories were confirmed published and clean.
-- Sprint 2.6.2 SegmentPool passed 81 assertions with no reported errors in the temporary test project. Implementation and test files were delivered; Core repository copy and documentation commits remain pending confirmation.
+- Sprint 2.6.2 SegmentPool passed 81 assertions with no reported errors in the temporary test project. Implementation, test and documentation were committed and pushed; both repositories were confirmed published and clean.
+- Sprint 2.6.3.1 SegmentSpawner configuration and cyclic sequence passed 53 assertions in the temporary test project. Documentation has been updated; repository publication remains pending confirmation.
 
 ---
 
