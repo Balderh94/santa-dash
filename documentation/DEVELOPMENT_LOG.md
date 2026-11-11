@@ -6,7 +6,7 @@
 - Engine: Godot 4.7.2-stable
 - Language: Typed GDScript
 - Current phase: Phase 2 — Core Gameplay Systems
-- Current sprint: Sprint 2.6.3.2.1 — First Segment and Initial Anchor
+- Current sprint: Sprint 2.6.3.2.2.1 — Consecutive Segment Placement
 
 ---
 
@@ -597,7 +597,7 @@ Implement the first SegmentSpawner increment: validate its host dependencies and
 
 #### Sprint 2.6.3.2.1 — First Segment and Initial Anchor
 
-**Status: Implementation passed the temporary Godot test project with 117 assertions and no reported errors. Core repository copy and documentation commits are pending confirmation.**
+**Status: Completed, documented, committed and pushed. Both repositories were confirmed published.**
 
 **Objective**
 
@@ -634,10 +634,80 @@ Extend `SegmentSpawner` to acquire and place the first segment from the configur
 - No production artistic assets were required.
 - Core `v0.2.0` remains the published release; this implementation is unreleased.
 
+#### Sprint 2.6.3.2.2.1 — Consecutive Segment Placement
+
+**Status: Implementation passed the temporary Godot test project with 145 assertions. Documentation has been updated; repository publication remains pending confirmation.**
+
+**Objective**
+
+Extend `SegmentSpawner` with `spawn_next_segment()` so each subsequent segment is placed by aligning its `EntryPoint` global transform with the last active segment's `ExitPoint` global transform.
+
+**Implementation**
+
+- Extended `generation/spawning/segment_spawner.gd`, preserving the configuration, cyclic sequence and first-segment placement behavior.
+- Added `spawn_next_segment()`, which requires an existing active segment before acquiring the next definition.
+- Acquires the next segment instance from `SegmentPool` using the current definition's `segment_id`.
+- Validates that the acquired root contains direct-child `Marker3D` nodes named `EntryPoint` and `ExitPoint`.
+- Calculates the new root transform from the previous active segment's global `ExitPoint` transform and the new segment's local `EntryPoint` transform.
+- Adds the segment to `WorldRoot`, verifies marker-transform coincidence, records it in the ordered active-segment list, advances the sequence and emits `segment_spawned` only after successful placement.
+- Failed placement emits `spawning_error`, preserves the sequence and attempts to detach and return the acquired instance to `SegmentPool`.
+- Expanded `tests/test_segment_spawner.gd`. The technical test scene remains exclusively in `endless-runner-core-test`.
+
+**Validation**
+
+- Executed the suite in `endless-runner-core-test`.
+- Result: `PASS: SegmentSpawner tests completed successfully (145 assertions).`
+- The user reported no errors.
+- Coverage includes the prior configuration/sequence and first-segment tests, rejection when no first segment exists, second-segment alignment, third-segment alignment with an offset and locally rotated `EntryPoint`, marker validation, non-invertible entry transform rejection, initial-anchor validation, duplicate first-spawn rejection, pool rollback and sequence preservation on failed placement.
+
+**Scope and limitations**
+
+- This increment implements transform-based placement and marker coincidence checks for subsequent segments.
+- It does not yet enforce the approved convention that `EntryPoint` and `ExitPoint` have the same local orientation aligned with `+Z`.
+- It does not validate `segment_length` against marker spacing or non-uniform scale.
+- It does not register placed segments with `WorldMovement`, recycle segments or integrate with a production game scene.
+- No production artistic assets were required.
+- Core `v0.2.0` remains the published release; this implementation is unreleased.
+
+#### Sprint 2.6.3.2.2.1 — Consecutive Segment Placement
+
+**Status: Implementation passed the temporary Godot test project with 145 assertions. Documentation has been updated; repository publication remains pending confirmation.**
+
+**Objective**
+
+Extend `SegmentSpawner` with `spawn_next_segment()` so each subsequent segment is placed by aligning its `EntryPoint` global transform with the last active segment's `ExitPoint` global transform.
+
+**Implementation**
+
+- Extended `generation/spawning/segment_spawner.gd`, preserving the configuration, cyclic sequence and first-segment placement behavior.
+- Added `spawn_next_segment()`, which requires an existing active segment before acquiring the next definition.
+- Acquires the next segment instance from `SegmentPool` using the current definition's `segment_id`.
+- Validates that the acquired root contains direct-child `Marker3D` nodes named `EntryPoint` and `ExitPoint`.
+- Calculates the new root transform from the previous active segment's global `ExitPoint` transform and the new segment's local `EntryPoint` transform.
+- Adds the segment to `WorldRoot`, verifies marker-transform coincidence, records it in the ordered active-segment list, advances the sequence and emits `segment_spawned` only after successful placement.
+- Failed placement emits `spawning_error`, preserves the sequence and attempts to detach and return the acquired instance to `SegmentPool`.
+- Expanded `tests/test_segment_spawner.gd`. The technical test scene remains exclusively in `endless-runner-core-test`.
+
+**Validation**
+
+- Executed the suite in `endless-runner-core-test`.
+- Result: `PASS: SegmentSpawner tests completed successfully (145 assertions).`
+- The user reported no errors.
+- Coverage includes the prior configuration/sequence and first-segment tests, rejection when no first segment exists, second-segment alignment, third-segment alignment with an offset and locally rotated `EntryPoint`, marker validation, non-invertible entry transform rejection, initial-anchor validation, duplicate first-spawn rejection, pool rollback and sequence preservation on failed placement.
+
+**Scope and limitations**
+
+- This increment implements transform-based placement and marker coincidence checks for subsequent segments.
+- It does not yet enforce the approved convention that `EntryPoint` and `ExitPoint` have the same local orientation aligned with `+Z`.
+- It does not validate `segment_length` against marker spacing or non-uniform scale.
+- It does not register placed segments with `WorldMovement`, recycle segments or integrate with a production game scene.
+- No production artistic assets were required.
+- Core `v0.2.0` remains the published release; this implementation is unreleased.
+
 ### General Implementation Status
 
 - No production artistic assets have been imported.
-- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition, SegmentPool and SegmentSpawner configuration/sequence/first-segment placement.
+- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition, SegmentPool and SegmentSpawner configuration/sequence/first-segment/consecutive-segment placement.
 - The Lane System implementation, tests and documentation are committed and pushed to the Core repository.
 - Sprint 2.4.1 implementation and documentation are committed and pushed to the Core repository; the corresponding SANTA DASH development log is also committed and pushed.
 - Sprint 2.4.2 implementation, tests, documentation and repository commits are complete.
@@ -651,7 +721,8 @@ Extend `SegmentSpawner` to acquire and place the first segment from the configur
 - Sprint 2.6.1 SegmentDefinition passed 24 assertions; implementation, test and documentation were committed and pushed. Both repositories were confirmed published and clean.
 - Sprint 2.6.2 SegmentPool passed 81 assertions with no reported errors in the temporary test project. Implementation, test and documentation were committed and pushed; both repositories were confirmed published and clean.
 - Sprint 2.6.3.1 SegmentSpawner configuration and cyclic sequence passed 53 assertions in the temporary test project. Implementation and documentation were published; both repositories were confirmed clean.
-- Sprint 2.6.3.2.1 SegmentSpawner first-segment placement at the WorldRoot origin passed 117 assertions with no reported errors in the temporary test project. Core repository copy and documentation commits remain pending confirmation.
+- Sprint 2.6.3.2.1 SegmentSpawner first-segment placement at the WorldRoot origin passed 117 assertions with no reported errors; implementation and documentation were published.
+- Sprint 2.6.3.2.2.1 SegmentSpawner consecutive-segment placement passed 145 assertions in the temporary test project. Documentation has been updated; repository publication remains pending confirmation.
 
 ---
 
