@@ -6,7 +6,7 @@
 - Engine: Godot 4.7.2-stable
 - Language: Typed GDScript
 - Current phase: Phase 2 — Core Gameplay Systems
-- Current sprint: Sprint 2.5.3 — Multi-segment World Movement Validation
+- Current sprint: Sprint 2.5.4 — World Movement Lifecycle Validation
 
 ---
 
@@ -455,6 +455,37 @@ Validate that `WorldMovement` moves multiple explicitly registered segment roots
 - The test uses technical `Node3D` nodes only; no artistic assets are required.
 
 
+#### Sprint 2.5.4 — World Movement Lifecycle Validation
+
+**Status: Test passed with 76 assertions, zero errors and zero warnings; test script copied into the Core working tree. Documentation is updated; repository commits are pending.**
+
+**Objective**
+
+Validate the lifecycle and cleanup behavior of `WorldMovement` without changing its production implementation or public API.
+
+**Test implementation**
+
+- Added `tests/test_world_movement_lifecycle.gd` to the Core working tree.
+- The technical test scene remains exclusively in the temporary `endless-runner-core-test` project and must not be copied into Core or either game project.
+- The suite exercises cleanup when registered segments or the bound `WorldRoot` leave the scene tree, WorldRoot changes/removal, signal-connection cleanup, and safe release of the `WorldMovement` node.
+- The test adds automated coverage for lifecycle edge cases; it does not add new production behavior.
+
+**Validation**
+
+- Executed the lifecycle suite in `endless-runner-core-test`.
+- Result: `PASS: WorldMovement lifecycle tests completed successfully (76 assertions).`
+- Godot reported 0 errors and 0 warnings.
+- The test script was copied into `endless-runner-core/tests/`.
+
+**Scope and limitations**
+
+- Sprint 2.5.4 adds test coverage only; no production `WorldMovement` code or public API was changed.
+- No segment generation, recycling, object pooling, difficulty integration or production gameplay scene integration was added.
+- The technical test scene remains in the temporary test project; only the test script belongs in Core.
+- The test uses technical nodes and requires no artistic assets.
+- Core v0.2.0 remains the published release; this test and its documentation are unreleased working-tree changes.
+
+
 ### General Implementation Status
 
 - No production artistic assets have been imported.
@@ -467,6 +498,8 @@ Validate that `WorldMovement` moves multiple explicitly registered segment roots
 - Core v0.2.0 is published; both SANTA DASH and GENERIC RUNNER submodules point to `v0.2.0`.
 - Sprint 2.5.1 WorldMovement is implemented and passed 67 assertions in the temporary test project; its implementation and documentation were committed and pushed.
 - Sprint 2.5.2 host-side GameFlowManager / WorldMovement integration test passed 52 assertions with zero Debugger errors; its Core test and documentation commits have been pushed, as has the SANTA DASH development-log update.
+- Sprint 2.5.3 multi-segment WorldMovement validation passed 37 assertions; its test script is in the Core working tree. Documentation and repository commits remain pending.
+- Sprint 2.5.4 WorldMovement lifecycle validation passed 76 assertions with zero errors and zero warnings; its test script is in the Core working tree. Documentation has been updated; repository commits remain pending.
 
 ---
 
