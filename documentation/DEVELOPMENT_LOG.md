@@ -6,7 +6,7 @@
 - Engine: Godot 4.7.2-stable
 - Language: Typed GDScript
 - Current phase: Phase 2 — Core Gameplay Systems
-- Current sprint: Sprint 2.6.3.2.2.1 — Consecutive Segment Placement
+- Current sprint: Sprint 2.6.3.2.2.2 — Segment Geometry Validation
 
 ---
 
@@ -704,10 +704,46 @@ Extend `SegmentSpawner` with `spawn_next_segment()` so each subsequent segment i
 - No production artistic assets were required.
 - Core `v0.2.0` remains the published release; this implementation is unreleased.
 
+#### Sprint 2.6.3.2.2.2 — Segment Geometry Validation
+
+**Status: Implementation and automated validation completed. The user reported 221/221 assertions passed with no errors. Documentation is being prepared; repository publication is pending.**
+
+**Objective**
+
+Enforce the approved geometric conventions for segment roots and their `EntryPoint` / `ExitPoint` markers before `SegmentSpawner` places either the first segment or a consecutive segment.
+
+**Implementation**
+
+- Extended `generation/spawning/segment_spawner.gd` while preserving the existing dependency configuration, cyclic sequence, first-segment placement and consecutive-segment placement APIs.
+- Added validation requiring the acquired `SegmentRoot` to have an identity local transform before the spawner applies its placement transform.
+- Added validation requiring direct-child `EntryPoint` and `ExitPoint` markers to be `Marker3D` nodes with unit scale and local orientation aligned with the segment's positive local Z axis.
+- Added validation requiring the markers to have matching local orientation within 0.1 degrees.
+- Added lateral and vertical marker-offset validation with a tolerance of 0.001 m.
+- Added positive longitudinal marker-spacing validation and comparison against `SegmentDefinition.segment_length` with a tolerance of 0.01 m.
+- Kept root-transform validation before placement so the spawner's intentional root transform does not cause false rejection. Marker-local geometry checks remain valid after placement.
+- Improved singular-transform diagnostics by checking the marker basis determinant before scale validation, ensuring a non-invertible `EntryPoint` is reported as such.
+- Applied geometric validation to both `spawn_first_segment()` and `spawn_next_segment()`.
+- Preserved transactional failure behavior: a rejected segment does not advance the sequence or modify the active-segment list, emits `spawning_error`, and attempts to restore and return the acquired instance to `SegmentPool`.
+- Expanded `tests/test_segment_spawner.gd`. Its technical test scene remains exclusively in `endless-runner-core-test`.
+
+**Validation**
+
+- Executed the updated suite in `endless-runner-core-test` using the Core implementation copied into the temporary test project.
+- Result: `PASS: SegmentSpawner tests completed successfully (221 assertions).`
+- The user explicitly reported no errors.
+- Coverage includes all previous configuration, sequence and placement cases plus invalid root transforms, marker orientation, marker scale, lateral/vertical offsets, longitudinal spacing, `segment_length` mismatch, singular transform diagnostics and rollback behavior.
+
+**Scope and limitations**
+
+- This subphase implements geometric validation only; it does not register placed segments with `WorldMovement`, recycle segments, perform procedural selection, assemble production tracks or integrate a production game scene.
+- The Core repository does not contain a `project.godot` test project. The suite runs in `endless-runner-core-test`; only the test script is maintained in Core, while the technical test scene remains in the temporary project.
+- No production artistic assets were required.
+- Core `v0.2.0` remains the published release; this implementation is unreleased.
+
 ### General Implementation Status
 
 - No production artistic assets have been imported.
-- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition, SegmentPool and SegmentSpawner configuration/sequence/first-segment/consecutive-segment placement.
+- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition, SegmentPool and SegmentSpawner configuration/sequence/placement/geometric validation.
 - The Lane System implementation, tests and documentation are committed and pushed to the Core repository.
 - Sprint 2.4.1 implementation and documentation are committed and pushed to the Core repository; the corresponding SANTA DASH development log is also committed and pushed.
 - Sprint 2.4.2 implementation, tests, documentation and repository commits are complete.
@@ -723,6 +759,7 @@ Extend `SegmentSpawner` with `spawn_next_segment()` so each subsequent segment i
 - Sprint 2.6.3.1 SegmentSpawner configuration and cyclic sequence passed 53 assertions in the temporary test project. Implementation and documentation were published; both repositories were confirmed clean.
 - Sprint 2.6.3.2.1 SegmentSpawner first-segment placement at the WorldRoot origin passed 117 assertions with no reported errors; implementation and documentation were published.
 - Sprint 2.6.3.2.2.1 SegmentSpawner consecutive-segment placement passed 145 assertions in the temporary test project. Documentation has been updated; repository publication remains pending confirmation.
+- Sprint 2.6.3.2.2.2 SegmentSpawner geometric validation passed 221 assertions with no errors in the temporary test project. Documentation has been updated; repository publication remains pending confirmation.
 
 ---
 
