@@ -6,7 +6,7 @@
 - Engine: Godot 4.7.2-stable
 - Language: Typed GDScript
 - Current phase: Phase 2 — Core Gameplay Systems
-- Current sprint: Sprint 2.6.3.3.1 — SegmentSpawner / WorldMovement Registration
+- Current sprint: Sprint 2.6.3.3.2.2 — SegmentSpawner Bulk Cleanup
 
 ---
 
@@ -743,7 +743,7 @@ Enforce the approved geometric conventions for segment roots and their `EntryPoi
 
 ### Sprint 2.6.3.3.1 — SegmentSpawner / WorldMovement Registration
 
-**Status: Implemented, tested and ready for repository publication**
+**Status: Implemented, tested and published**
 
 **Objective**
 
@@ -777,10 +777,49 @@ Integrate `SegmentSpawner` with the existing `WorldMovement` registration API so
 - No production artistic assets or production game-scene integration were required for this technical validation.
 - Core `v0.2.0` remains the published release. This implementation is unreleased until a later Core release is prepared.
 
+### Sprint 2.6.3.3.2.1 — Individual Segment Despawn
+
+**Status: Implemented, tested and ready for repository publication**
+
+**Objective**
+
+Implement the inverse lifecycle operation for one active segment: unregister it from `WorldMovement`, detach it from `WorldRoot`, restore its identity local transform and return it to `SegmentPool`.
+
+**Implementation**
+
+- Updated `generation/spawning/segment_spawner.gd` with `despawn_segment(segment: Node3D) -> bool`.
+- Added `segment_despawned(segment: Node3D, definition: SegmentDefinition)`.
+- The method rejects invalid, foreign or already-despawned segment references without changing the active state.
+- A valid active segment is unregistered from `WorldMovement`, detached from its parent, reset to `Transform3D.IDENTITY` and passed to `SegmentPool.release()`.
+- Active segment and definition tracking is removed only after the pool accepts the instance.
+- The signal is emitted only after successful release.
+- Despawn does not advance, rewind or reset `sequence_index`.
+- If `SegmentPool.release()` fails, the spawner attempts rollback by restoring the original parent and transform and registering the segment again. Active tracking references are retained for the failed operation.
+- The operation does not start or stop `WorldMovement` and is tested with the movement system active and stopped.
+- `WorldMovement` and `SegmentPool` production implementations were not changed for this subphase.
+
+**Validation**
+
+- Expanded `tests/test_segment_spawner.gd` in the separate `endless-runner-core-test` project.
+- Result: `PASS: SegmentSpawner tests completed successfully (317 assertions).`
+- The user reported no errors.
+- New test groups: individual segment despawn and pool return; `SegmentPool.release()` failure rollback during despawn.
+- The complete suite includes all previous configuration, sequence, placement, geometry and WorldMovement registration tests.
+
+**Scope and limitations**
+
+- This subphase implements individual segment despawn only.
+- `clear_active_segments()` is not implemented yet.
+- Automatic distance-based recycling, procedural segment selection and production-scene integration remain future work.
+- The approved future `clear_active_segments()` contract is partial cleanup: attempt all active despawns even if one fails, return `false` if any despawn fails, and preserve `sequence_index`. Only `reset_sequence()` resets the sequence.
+- The Core repository does not contain a `project.godot` test project. The suite runs in `endless-runner-core-test`; its technical test scene remains outside Core.
+- No production artistic assets were required.
+- Core `v0.2.0` remains the published release; this implementation is unreleased until a later Core release is prepared.
+
 ### General Implementation Status
 
 - No production artistic assets have been imported.
-- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition, SegmentPool and SegmentSpawner configuration/sequence/placement/geometric validation and WorldMovement registration.
+- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition, SegmentPool and SegmentSpawner configuration/sequence/placement/geometric validation, WorldMovement registration and individual despawn.
 - The Lane System implementation, tests and documentation are committed and pushed to the Core repository.
 - Sprint 2.4.1 implementation and documentation are committed and pushed to the Core repository; the corresponding SANTA DASH development log is also committed and pushed.
 - Sprint 2.4.2 implementation, tests, documentation and repository commits are complete.
@@ -797,6 +836,8 @@ Integrate `SegmentSpawner` with the existing `WorldMovement` registration API so
 - Sprint 2.6.3.2.1 SegmentSpawner first-segment placement at the WorldRoot origin passed 117 assertions with no reported errors; implementation and documentation were published.
 - Sprint 2.6.3.2.2.1 SegmentSpawner consecutive-segment placement passed 145 assertions in the temporary test project. Implementation and documentation were published.
 - Sprint 2.6.3.2.2.2 SegmentSpawner geometric validation passed 221 assertions with no errors in the temporary test project. Implementation and documentation were published; both repositories were confirmed published.
+- Sprint 2.6.3.3.1 SegmentSpawner / WorldMovement registration passed 256 assertions with no errors. Implementation and documentation were published in Core and Santa Dash.
+- Sprint 2.6.3.3.2.1 individual segment despawn passed 317 assertions with no errors in the temporary test project. Documentation is prepared; repository publication is pending.
 
 ---
 
