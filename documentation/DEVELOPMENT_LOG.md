@@ -779,7 +779,7 @@ Integrate `SegmentSpawner` with the existing `WorldMovement` registration API so
 
 ### Sprint 2.6.3.3.2.1 — Individual Segment Despawn
 
-**Status: Implemented, tested and ready for repository publication**
+**Status: Implemented, tested and published**
 
 **Objective**
 
@@ -808,18 +808,53 @@ Implement the inverse lifecycle operation for one active segment: unregister it 
 
 **Scope and limitations**
 
-- This subphase implements individual segment despawn only.
-- `clear_active_segments()` is not implemented yet.
+- This subphase implements individual segment despawn. Bulk cleanup is implemented and validated in the following Sprint 2.6.3.3.2.2 entry.
 - Automatic distance-based recycling, procedural segment selection and production-scene integration remain future work.
-- The approved future `clear_active_segments()` contract is partial cleanup: attempt all active despawns even if one fails, return `false` if any despawn fails, and preserve `sequence_index`. Only `reset_sequence()` resets the sequence.
 - The Core repository does not contain a `project.godot` test project. The suite runs in `endless-runner-core-test`; its technical test scene remains outside Core.
 - No production artistic assets were required.
 - Core `v0.2.0` remains the published release; this implementation is unreleased until a later Core release is prepared.
 
+### Sprint 2.6.3.3.2.2 — Bulk Active-Segment Cleanup
+
+**Status: Implemented and validated in the temporary Godot test project. Core and SANTA DASH repository publication is pending.**
+
+**Objective**
+
+Add `clear_active_segments() -> bool` to `SegmentSpawner` so the host can attempt to despawn every currently active segment through the established individual-despawn lifecycle.
+
+**Implementation**
+
+- Added `clear_active_segments() -> bool` to `generation/spawning/segment_spawner.gd`.
+- The method takes a snapshot of the currently active segment references before iterating. Successful removals therefore do not invalidate or alter the collection being traversed.
+- Each segment in the snapshot is processed through the existing `despawn_segment()` method. The bulk method does not duplicate the individual unregister, detach, transform-reset, pool-release, rollback or signal logic.
+- Processing continues after an individual despawn failure. The method returns `false` if at least one despawn fails; otherwise it returns `true`.
+- An empty active list is a successful no-op. Repeated calls after a successful clear also return `true`.
+- Each successful individual despawn emits its existing `segment_despawned` signal. Failed individual despawns do not emit that success signal.
+- The method preserves `sequence_index`, including when the clear is only partially successful. It does not call `reset_sequence()`.
+- The method does not start or stop `WorldMovement`; it supports both active and stopped movement.
+- After a successful clear, `spawn_first_segment()` can be called again without reconfiguring `SegmentSpawner`.
+- `SegmentPool` and `WorldMovement` production implementations were not changed for this subphase.
+
+**Validation**
+
+- Updated `tests/test_segment_spawner.gd` and executed the complete suite in the separate `endless-runner-core-test` Godot project.
+- Result: `PASS: SegmentSpawner tests completed successfully (354 assertions).`
+- The user supplied the successful Godot Output result. No test errors were reported.
+- The suite includes the previous configuration, sequence, placement, geometry, WorldMovement registration and individual-despawn cases.
+- Bulk-cleanup coverage includes clearing multiple active segments while movement is stopped, clearing an empty list, repeated empty clears, spawning again after a successful clear, partial failure when a pool release is rejected, continued cleanup of the remaining snapshot entries, preservation of the sequence index, preservation of active WorldMovement state, and retrying the remaining segment.
+
+**Scope and limitations**
+
+- This subphase implements explicit bulk cleanup only. It does not add automatic distance-based recycling or decide when the host should clear segments.
+- Procedural segment selection, production track assembly and production-scene integration remain future work.
+- The Core repository does not contain a `project.godot` test project. The suite runs in `endless-runner-core-test`; its technical test scene remains outside Core.
+- No production artistic assets were required.
+- Core `v0.2.0` remains the published release. This implementation is validated in the working development state but has not yet been published as a new Core release.
+
 ### General Implementation Status
 
 - No production artistic assets have been imported.
-- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition, SegmentPool and SegmentSpawner configuration/sequence/placement/geometric validation, WorldMovement registration and individual despawn.
+- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition, SegmentPool and SegmentSpawner configuration/sequence/placement/geometric validation, WorldMovement registration, individual despawn and bulk active-segment cleanup.
 - The Lane System implementation, tests and documentation are committed and pushed to the Core repository.
 - Sprint 2.4.1 implementation and documentation are committed and pushed to the Core repository; the corresponding SANTA DASH development log is also committed and pushed.
 - Sprint 2.4.2 implementation, tests, documentation and repository commits are complete.
@@ -837,7 +872,8 @@ Implement the inverse lifecycle operation for one active segment: unregister it 
 - Sprint 2.6.3.2.2.1 SegmentSpawner consecutive-segment placement passed 145 assertions in the temporary test project. Implementation and documentation were published.
 - Sprint 2.6.3.2.2.2 SegmentSpawner geometric validation passed 221 assertions with no errors in the temporary test project. Implementation and documentation were published; both repositories were confirmed published.
 - Sprint 2.6.3.3.1 SegmentSpawner / WorldMovement registration passed 256 assertions with no errors. Implementation and documentation were published in Core and Santa Dash.
-- Sprint 2.6.3.3.2.1 individual segment despawn passed 317 assertions with no errors in the temporary test project. Documentation is prepared; repository publication is pending.
+- Sprint 2.6.3.3.2.1 individual segment despawn passed 317 assertions with no errors in the temporary test project. Implementation and documentation were published in Core and recorded in this development log.
+- Sprint 2.6.3.3.2.2 bulk active-segment cleanup passed the complete SegmentSpawner suite with 354 assertions and no reported errors. Core implementation, tests and documentation, plus this SANTA DASH development-log entry, are prepared for repository publication.
 
 ---
 
