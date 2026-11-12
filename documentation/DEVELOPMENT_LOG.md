@@ -6,7 +6,7 @@
 - Engine: Godot 4.7.2-stable
 - Language: Typed GDScript
 - Current phase: Phase 2 — Core Gameplay Systems
-- Current sprint: Sprint 2.6.3.2.2.2 — Segment Geometry Validation
+- Current sprint: Sprint 2.6.3.3.1 — SegmentSpawner / WorldMovement Registration
 
 ---
 
@@ -740,10 +740,47 @@ Enforce the approved geometric conventions for segment roots and their `EntryPoi
 - No production artistic assets were required.
 - Core `v0.2.0` remains the published release; this implementation is unreleased.
 
+
+### Sprint 2.6.3.3.1 — SegmentSpawner / WorldMovement Registration
+
+**Status: Implemented, tested and ready for repository publication**
+
+**Objective**
+
+Integrate `SegmentSpawner` with the existing `WorldMovement` registration API so every successfully placed segment is registered for longitudinal movement, regardless of whether world movement is currently active or stopped.
+
+**Implementation**
+
+- Updated `generation/spawning/segment_spawner.gd`.
+- After a segment has been acquired, geometrically validated, placed under `WorldRoot` and its placement transform verified, `SegmentSpawner` registers it through `WorldMovement.register_segment()`.
+- The registration step is applied to both `spawn_first_segment()` and `spawn_next_segment()`.
+- Registration occurs before the segment is committed to the active-segment list, before the sequence advances and before `segment_spawned` is emitted.
+- Registration is independent of the current movement-active state. A segment registered while movement is stopped is ready to move when the host starts `WorldMovement`; a segment registered while movement is active joins the existing movement set.
+- If registration fails, the spawn operation is rolled back. The spawner checks whether registration took effect, unregisters when necessary, detaches the instance from `WorldRoot`, restores its pre-placement identity local transform and attempts to return it to `SegmentPool`.
+- A failed registration does not advance the sequence, does not add the segment to the active list and does not emit `segment_spawned`.
+- The existing `WorldMovement` implementation and public API were not modified. `SegmentPool` was not modified.
+- Host ownership of `WorldMovement.start_movement()` and `stop_movement()` remains unchanged. `SegmentSpawner` does not start or stop world movement.
+
+**Validation**
+
+- Updated `tests/test_segment_spawner.gd` and executed it in the separate `endless-runner-core-test` Godot project using the Core implementation copied into that project.
+- The complete suite passed: `PASS: SegmentSpawner tests completed successfully (256 assertions).`
+- The user reported no errors in the Godot Output / Debugger result.
+- The suite retained the previous 221 assertions and added 35 assertions for WorldMovement registration, movement-active and movement-stopped cases, movement of registered segments, registration during active movement, forced registration failure, rollback, sequence preservation, pool state and signal behavior.
+
+**Scope and limitations**
+
+- This subphase implements registration of successfully placed segments with `WorldMovement`.
+- Segment removal, normal unregistration during recycling, returning active segments to the pool, automatic recycling and procedural segment selection remain future work.
+- Rollback of a failed spawn includes unregistering a segment if registration was partially or fully applied.
+- The Core repository does not contain a `project.godot` test project. The automated suite runs in `endless-runner-core-test`; the technical test scene remains in that temporary project.
+- No production artistic assets or production game-scene integration were required for this technical validation.
+- Core `v0.2.0` remains the published release. This implementation is unreleased until a later Core release is prepared.
+
 ### General Implementation Status
 
 - No production artistic assets have been imported.
-- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition, SegmentPool and SegmentSpawner configuration/sequence/placement/geometric validation.
+- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition, SegmentPool and SegmentSpawner configuration/sequence/placement/geometric validation and WorldMovement registration.
 - The Lane System implementation, tests and documentation are committed and pushed to the Core repository.
 - Sprint 2.4.1 implementation and documentation are committed and pushed to the Core repository; the corresponding SANTA DASH development log is also committed and pushed.
 - Sprint 2.4.2 implementation, tests, documentation and repository commits are complete.
@@ -758,8 +795,8 @@ Enforce the approved geometric conventions for segment roots and their `EntryPoi
 - Sprint 2.6.2 SegmentPool passed 81 assertions with no reported errors in the temporary test project. Implementation, test and documentation were committed and pushed; both repositories were confirmed published and clean.
 - Sprint 2.6.3.1 SegmentSpawner configuration and cyclic sequence passed 53 assertions in the temporary test project. Implementation and documentation were published; both repositories were confirmed clean.
 - Sprint 2.6.3.2.1 SegmentSpawner first-segment placement at the WorldRoot origin passed 117 assertions with no reported errors; implementation and documentation were published.
-- Sprint 2.6.3.2.2.1 SegmentSpawner consecutive-segment placement passed 145 assertions in the temporary test project. Documentation has been updated; repository publication remains pending confirmation.
-- Sprint 2.6.3.2.2.2 SegmentSpawner geometric validation passed 221 assertions with no errors in the temporary test project. Documentation has been updated; repository publication remains pending confirmation.
+- Sprint 2.6.3.2.2.1 SegmentSpawner consecutive-segment placement passed 145 assertions in the temporary test project. Implementation and documentation were published.
+- Sprint 2.6.3.2.2.2 SegmentSpawner geometric validation passed 221 assertions with no errors in the temporary test project. Implementation and documentation were published; both repositories were confirmed published.
 
 ---
 
