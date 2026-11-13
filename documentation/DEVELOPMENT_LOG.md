@@ -6,7 +6,7 @@
 - Engine: Godot 4.7.2-stable
 - Language: Typed GDScript
 - Current phase: Phase 2 — Core Gameplay Systems
-- Current sprint: Sprint 2.6.3.3.2.2 — SegmentSpawner Bulk Cleanup
+- Current sprint: Sprint 2.6.3.3.3.3 — Explicit Segment Recycling
 
 ---
 
@@ -883,7 +883,7 @@ Provide a reusable, host-independent spatial reference for detecting when an act
 
 ### Sprint 2.6.3.3.3.2 — Reverse-Side Segment Extension
 
-**Status: Implementation prepared; Godot validation and repository publication pending.**
+**Status: Implemented, validated and published.**
 
 **Objective**
 
@@ -903,20 +903,61 @@ Correct segment placement direction so the active track continues to extend ahea
 
 **Validation**
 
-- The previous append-side implementation passed 394 assertions, including recycle-reference detection.
-- The updated reverse-side extension suite has not yet been executed in Godot. Its assertions must be run in `endless-runner-core-test` before this subphase is marked validated.
-- No production artistic assets or SANTA DASH production-scene changes are required.
+- The user executed the complete SegmentSpawner suite in `endless-runner-core-test`.
+- Result: `PASS: SegmentSpawner tests completed successfully (402 assertions).`
+- The initial 401/402 result exposed a test-coordinate-space error: the test read a marker's local `position.z` instead of converting its global position into `WorldRoot` local space. The test was corrected; production placement code was not changed for this correction.
+- The corrected suite passed all 402 assertions with no reported errors.
+- The user confirmed that the Core and SANTA DASH repository changes were committed and published.
+- No new Core release or submodule update was part of this subphase.
 
 **Scope and limitations**
 
 - This subphase corrects segment placement direction and candidate ordering only.
-- Automatic invocation of `despawn_segment()` and automatic segment replenishment remain future work.
+- Automatic invocation of `despawn_segment()` was implemented and validated in the following Sprint 2.6.3.3.3.3 entry. Automatic replenishment remains future work.
 - Core remains at published version `v0.2.0`; no new release or submodule update is included.
+
+### Sprint 2.6.3.3.3.3 — Explicit Recyclable-Segment Despawning
+
+**Status: Implemented and validated; repository publication pending.**
+
+**Objective**
+
+Add an explicit `recycle_segments() -> int` operation to `SegmentSpawner`. The method processes the recyclable-segment candidates detected by `get_recyclable_segments()` and delegates each removal to the existing `despawn_segment()` lifecycle.
+
+**Implementation**
+
+- Added `recycle_segments() -> int` to `generation/spawning/segment_spawner.gd`.
+- The method obtains a snapshot of recyclable candidates through `get_recyclable_segments()`.
+- Candidates are processed in the order returned by the detection method: trailing/oldest segment first.
+- Each candidate is processed through `despawn_segment()`. The recycling method does not duplicate unregistration, detachment, transform reset, pool release, rollback or success-signal behavior.
+- The method continues processing the remaining candidates if an individual despawn fails.
+- The return value is the number of segments successfully recycled; failed despawns are not counted.
+- The operation preserves `sequence_index` and does not stop or start `WorldMovement`.
+- Recycling is an explicit host-invoked operation. This subphase does not add a timer, `_process()` loop, movement callback or direct `GameFlowManager` dependency.
+- No replacement segments are spawned by this method. Detection, despawn and replenishment remain separate responsibilities.
+- Updated `tests/test_segment_spawner.gd`, `documentation/API_REFERENCE.md`, `documentation/ARCHITECTURE.md` and `documentation/CHANGELOG.md`.
+
+**Validation**
+
+- The user executed the complete SegmentSpawner suite in `endless-runner-core-test`.
+- Result: `PASS: SegmentSpawner tests completed successfully (467 assertions).`
+- The first run passed 466/467 assertions because the existing reverse-side recycle-detection test used a marker-local coordinate where a `WorldRoot`-local coordinate was required.
+- The test was corrected to convert the marker's global position using `WorldRoot.to_local()`. No production code was changed for that test correction.
+- The corrected complete suite passed all 467 assertions. No test errors were reported.
+- The new test group, `explicit recyclable-segment despawning`, validates the explicit recycling operation alongside the existing configuration, sequence, placement, geometry, movement-registration, despawn, bulk-clear and candidate-detection coverage.
+
+**Scope and limitations**
+
+- This subphase implements explicit recycling only. It does not automatically decide when to call `recycle_segments()` and does not replenish the track with new segments.
+- Automatic recycling/replenishment orchestration, procedural segment selection and production-scene integration remain future work.
+- The Core repository does not contain a `project.godot` test project. The suite runs in `endless-runner-core-test`; its technical test scene remains outside Core.
+- No production artistic assets were required.
+- Core remains at published version `v0.2.0`; no new release or submodule update is included in this subphase.
 
 ### General Implementation Status
 
 - No production artistic assets have been imported.
-- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition, SegmentPool and SegmentSpawner configuration/sequence/placement/geometric validation, WorldMovement registration, individual despawn, bulk active-segment cleanup and recycle-reference candidate detection.
+- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition, SegmentPool and SegmentSpawner configuration/sequence/placement/geometric validation, WorldMovement registration, individual despawn, bulk active-segment cleanup, recycle-reference candidate detection, reverse-side segment extension and explicit recyclable-segment despawning.
 - The Lane System implementation, tests and documentation are committed and pushed to the Core repository.
 - Sprint 2.4.1 implementation and documentation are committed and pushed to the Core repository; the corresponding SANTA DASH development log is also committed and pushed.
 - Sprint 2.4.2 implementation, tests, documentation and repository commits are complete.
@@ -937,7 +978,8 @@ Correct segment placement direction so the active track continues to extend ahea
 - Sprint 2.6.3.3.2.1 individual segment despawn passed 317 assertions with no errors in the temporary test project. Implementation and documentation were published in Core and recorded in this development log.
 - Sprint 2.6.3.3.2.2 bulk active-segment cleanup passed the complete SegmentSpawner suite with 354 assertions and no reported errors. Core implementation and documentation, plus this SANTA DASH development-log entry, were published.
 - Sprint 2.6.3.3.3.1 recycle-reference detection passed the complete SegmentSpawner suite with 394 assertions and no reported errors; implementation and documentation were published.
-- Sprint 2.6.3.3.3.2 reverse-side segment extension is prepared and awaits Godot validation.
+- Sprint 2.6.3.3.3.2 reverse-side segment extension passed the complete SegmentSpawner suite with 402 assertions and no reported errors; Core and SANTA DASH repository changes were committed and published.
+- Sprint 2.6.3.3.3.3 explicit recyclable-segment despawning passed the complete SegmentSpawner suite with 467 assertions and no reported errors. Core implementation, tests and documentation are validated; repository publication is pending.
 
 ---
 
