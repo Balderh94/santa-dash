@@ -6,7 +6,7 @@
 - Engine: Godot 4.7.2-stable
 - Language: Typed GDScript
 - Current phase: Phase 2 — Core Gameplay Systems
-- Current sprint: Sprint 2.6.3.3.4 — Minimum-Count Track Maintenance
+- Current sprint: Sprint 2.6.3.3.5 — Track Maintenance Controller Integration
 
 ---
 
@@ -956,7 +956,7 @@ Add an explicit `recycle_segments() -> int` operation to `SegmentSpawner`. The m
 
 ### Sprint 2.6.3.3.4 — Minimum-Count Track Maintenance
 
-**Status: Implemented; Godot validation and repository publication pending.**
+**Status: Implemented, validated and published.**
 
 **Objective**
 
@@ -981,19 +981,62 @@ Add an explicit `maintain_track() -> bool` operation to `SegmentSpawner`. It rec
 
 - Added 106 assertions covering minimum-count defaults and configuration, unconfigured/missing-reference/empty-track preconditions, initial fill, no-op maintenance, recycle order, final-segment protection, pool reuse, configurable minimum targets, active/stopped `WorldMovement`, release-failure rollback, partial progress, exhausted-pool spawn failure and retry.
 - Expected complete SegmentSpawner suite total: 573 assertions (467 previously passing plus 106 new assertions).
-- The updated suite has not yet been executed by the user in `endless-runner-core-test`; this sprint must remain unvalidated until Godot reports a full pass.
+- The user executed the complete SegmentSpawner suite in `endless-runner-core-test`.
+- Result: `PASS: SegmentSpawner tests completed successfully (573 assertions).`
+- All 573 assertions passed with no reported errors.
+- The user confirmed that the Core and SANTA DASH commits and pushes for this subphase were completed.
 - No production artistic assets or SANTA DASH production-scene changes are required.
 
 **Scope and limitations**
 
-- This increment adds explicit track maintenance only. The host must decide when to call `maintain_track()`; automatic lifecycle invocation and production-scene wiring remain future work.
+- This increment adds explicit track maintenance only. The host decides when to call `maintain_track()`; the reusable TrackMaintenanceController is implemented in the following Sprint 2.6.3.3.5 entry. Production-scene wiring remains future work.
 - Procedural segment selection and difficulty-aware spawn patterns are not included.
+- Core remains at published version `v0.2.0`; no new release or submodule update is included.
+
+
+### Sprint 2.6.3.3.5 — Track Maintenance Controller Integration
+
+**Status: Implemented and validated; repository publication pending.**
+
+**Objective**
+
+Add a reusable host-owned controller that periodically invokes `SegmentSpawner.maintain_track()` while `WorldMovement` is active, without introducing a direct dependency on `GameFlowManager`.
+
+**Implementation**
+
+- Added `generation/spawning/track_maintenance_controller.gd`, class `TrackMaintenanceController extends Node`.
+- Added typed `configure(segment_spawner: SegmentSpawner, world_movement: WorldMovement, interval: float = 0.25) -> bool`, requiring both dependencies and the controller to be inside the scene tree. Invalid configuration is rejected transactionally; reconfiguration while running is rejected.
+- Added `start() -> bool`, `stop() -> void`, and `set_check_interval(interval: float) -> bool`. The check interval defaults to 0.25 seconds and accepts finite values from 0.01 to 10.0 seconds.
+- Starting while WorldMovement is active performs one immediate maintenance attempt. Starting while movement is stopped waits for `movement_started`; that signal triggers the first immediate attempt.
+- `movement_stopped` disables physics processing and resets accumulated time. `movement_started` re-enables periodic checks and performs one immediate maintenance attempt.
+- Periodic checks use `_physics_process()` and an accumulator. At most one maintenance operation is performed per physics frame; the controller does not run catch-up loops after a long frame.
+- A failed `maintain_track()` emits `maintenance_failed` but leaves the controller running so a later scheduled check can retry. Reentrant maintenance is prevented.
+- Added `controller_started`, `controller_stopped`, `maintenance_completed(recycled_count, active_count)` and `maintenance_failed(message)` signals. The recycled count is derived by comparing the pre-maintenance candidate snapshot with the post-maintenance active segment list.
+- If either dependency leaves the scene tree while running, the controller emits a failure and stops safely. Runtime signals are disconnected on stop.
+- No Timer, `_process()`, direct GameFlow dependency, player-specific reference, initial-segment creation or procedural segment selection was added. The host remains responsible for controller lifecycle calls.
+- Added `tests/test_track_maintenance_controller.gd` and updated Core `API_REFERENCE.md`, `ARCHITECTURE.md` and `CHANGELOG.md`.
+
+**Validation**
+
+- The new independent TrackMaintenanceController suite contains 62 assertions.
+- The user executed `tests/test_track_maintenance_controller.tscn` in Godot 4.7.2-stable in the separate `endless-runner-core-test` project.
+- Result: `PASS: TrackMaintenanceController tests completed successfully (62 assertions).`
+- All 62 assertions passed. The user reported no test failure; the Output message confirms successful completion.
+- The existing SegmentSpawner suite remains a separate suite and previously passed with 573 assertions; the controller test does not replace or merge with it.
+- Repository commits and pushes for this subphase have not yet been confirmed.
+
+**Scope and limitations**
+
+- This subphase implements reusable controller logic only. It does not wire the controller into a production SANTA DASH or GENERIC RUNNER scene.
+- The host must start and stop `WorldMovement` and `TrackMaintenanceController` according to its game lifecycle. The controller does not depend on `GameFlowManager`.
+- Procedural segment selection, difficulty-aware patterns and production-scene integration remain future work.
+- No production artistic assets were required.
 - Core remains at published version `v0.2.0`; no new release or submodule update is included.
 
 ### General Implementation Status
 
 - No production artistic assets have been imported.
-- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition, SegmentPool and SegmentSpawner configuration/sequence/placement/geometric validation, WorldMovement registration, individual despawn, bulk active-segment cleanup, recycle-reference candidate detection, reverse-side segment extension, explicit recyclable-segment despawning and minimum-count track maintenance.
+- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition, SegmentPool and SegmentSpawner configuration/sequence/placement/geometric validation, WorldMovement registration, individual despawn, bulk active-segment cleanup, recycle-reference candidate detection, reverse-side segment extension, explicit recyclable-segment despawning and minimum-count track maintenance, and TrackMaintenanceController implementation (62 assertions passed; repository publication pending).
 - The Lane System implementation, tests and documentation are committed and pushed to the Core repository.
 - Sprint 2.4.1 implementation and documentation are committed and pushed to the Core repository; the corresponding SANTA DASH development log is also committed and pushed.
 - Sprint 2.4.2 implementation, tests, documentation and repository commits are complete.
@@ -1016,6 +1059,8 @@ Add an explicit `maintain_track() -> bool` operation to `SegmentSpawner`. It rec
 - Sprint 2.6.3.3.3.1 recycle-reference detection passed the complete SegmentSpawner suite with 394 assertions and no reported errors; implementation and documentation were published.
 - Sprint 2.6.3.3.3.2 reverse-side segment extension passed the complete SegmentSpawner suite with 402 assertions and no reported errors; Core and SANTA DASH repository changes were committed and published.
 - Sprint 2.6.3.3.3.3 explicit recyclable-segment despawning passed the complete SegmentSpawner suite with 467 assertions and no reported errors; Core implementation, tests and documentation, plus the SANTA DASH development-log update, were committed and pushed.
+- Sprint 2.6.3.3.4 minimum-count track maintenance passed the complete SegmentSpawner suite with 573 assertions and no reported errors; the user confirmed the Core and SANTA DASH commits and pushes were completed.
+- Sprint 2.6.3.3.5 TrackMaintenanceController passed its independent test suite with 62 assertions and no reported failures; Core and SANTA DASH repository publication remains pending.
 
 ---
 
