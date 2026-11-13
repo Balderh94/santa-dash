@@ -853,41 +853,70 @@ Add `clear_active_segments() -> bool` to `SegmentSpawner` so the host can attemp
 
 ### Sprint 2.6.3.3.3.1 — Recycle Reference and Candidate Detection
 
+**Status: Implemented, validated and published.**
+
+**Objective**
+
+Provide a reusable, host-independent spatial reference for detecting when an active segment has moved sufficiently far behind the player.
+
+**Implementation**
+
+- Added `SegmentSpawner.bind_recycle_reference(reference: Node3D) -> bool`.
+- Added `set_recycle_distance(distance: float) -> bool` and read-only `recycle_distance`, defaulting to 15.0 meters.
+- Added `get_recyclable_segments() -> Array[Node3D]`, returning a snapshot of active segments whose `EntryPoint` has reached or passed the host reference plus the configured distance along `WorldRoot`-local +Z.
+- The host supplies an external `Node3D`; Core does not depend on `PlayerMovement`, Santa or a concrete player class.
+- Global positions are converted into `WorldRoot` local space. The player is not assumed to be at Z = 0.
+- Detection does not despawn, unregister, reparent or move segments. It does not alter `sequence_index` or `WorldMovement`.
+- Updated Core API, architecture and changelog documentation.
+
+**Validation**
+
+- The user executed the complete SegmentSpawner suite in `endless-runner-core-test`.
+- Result: `PASS: SegmentSpawner tests completed successfully (394 assertions).`
+- No test errors were reported.
+- The suite included recycle-reference binding, non-zero player Z, translated parent coordinates, threshold boundaries, active/stopped movement and non-mutating candidate detection.
+
+**Scope and limitations**
+
+- This subphase implements reference binding and candidate detection only. Automatic despawn and segment replenishment remain future work.
+- Core remains at published version `v0.2.0`; no release or submodule update was part of this subphase.
+
+### Sprint 2.6.3.3.3.2 — Reverse-Side Segment Extension
+
 **Status: Implementation prepared; Godot validation and repository publication pending.**
 
 **Objective**
 
-Provide a reusable, host-independent spatial reference for detecting when an active segment has moved sufficiently far behind the player. This subphase detects candidates only; it does not despawn or replenish segments.
+Correct segment placement direction so the active track continues to extend ahead of the player while `WorldMovement` moves existing segments toward local +Z.
 
-**Core implementation**
+**Implementation**
 
-- Added `SegmentSpawner.bind_recycle_reference(reference: Node3D) -> bool`.
-- The host supplies a valid `Node3D` reference after `SegmentSpawner.configure()`. The reference must be inside the scene tree, not queued for deletion, and cannot be `WorldRoot` or one of its descendants.
-- Core does not depend on `PlayerMovement`, Santa or any concrete player class.
-- Added `set_recycle_distance(distance: float) -> bool` and read-only `recycle_distance`. The default is 15.0 meters. Finite non-negative values are accepted; negative and non-finite values are rejected without changing the current setting.
-- Added `get_recyclable_segments() -> Array[Node3D]`. It returns a snapshot of active segments whose direct-child `EntryPoint` has reached or passed `reference_local_z + recycle_distance` along `WorldRoot`-local +Z.
-- The comparison converts global positions into `WorldRoot` local space, so it does not assume that the player is located at Z = 0 and remains valid under a translated shared parent.
-- The comparison is inclusive at the threshold.
-- Detection is read-only with respect to the active segment lifecycle: it does not despawn, unregister, reparent or move segments, and does not alter `sequence_index` or `WorldMovement` state.
-- Detection is independent of whether `WorldMovement` is active or stopped.
+- Revised `SegmentSpawner.spawn_next_segment()` to use the first active segment as the leading anchor.
+- The new segment's `ExitPoint` is aligned with the leading active segment's `EntryPoint`. Its placement transform is calculated from the leading EntryPoint global transform and the inverse of the new segment's local ExitPoint transform.
+- The new segment extends toward `WorldRoot`-local -Z. `WorldMovement` continues moving registered segments toward +Z; its implementation is unchanged.
+- After successful placement and WorldMovement registration, the new segment and matching definition are inserted at index zero of the active arrays.
+- Active arrays are now ordered from leading (-Z) to trailing (+Z). The oldest segment is at the last index.
+- `get_recyclable_segments()` now iterates from the end of the active arrays so candidates are returned oldest/trailing-first.
+- Updated alignment tests for ordinary segments and segments with a local EntryPoint offset.
+- Updated recycle-detection tests to simulate +Z world movement and verify that the trailing segments become candidates in oldest-first order.
 - Updated Core API, architecture and changelog documentation.
 
-**Validation plan**
+**Validation**
 
-- Extended `tests/test_segment_spawner.gd` to cover binding validation, non-zero player Z, translated parent coordinates, threshold boundary behavior, configurable distance, invalid distances, stopped and active movement, and the guarantee that detection does not despawn segments.
-- Godot execution has not yet been performed in this subphase. Do not treat the new assertions as passed until the full test suite reports a successful result in `endless-runner-core-test`.
+- The previous append-side implementation passed 394 assertions, including recycle-reference detection.
+- The updated reverse-side extension suite has not yet been executed in Godot. Its assertions must be run in `endless-runner-core-test` before this subphase is marked validated.
+- No production artistic assets or SANTA DASH production-scene changes are required.
 
 **Scope and limitations**
 
-- This subphase implements reference binding and candidate detection only.
-- Automatic calls to `despawn_segment()`, replenishment of the active track and procedural selection remain future work.
-- No production artistic assets or SANTA DASH production-scene changes are required at this stage.
-- The Core published release remains `v0.2.0`; no new release or submodule update is included.
+- This subphase corrects segment placement direction and candidate ordering only.
+- Automatic invocation of `despawn_segment()` and automatic segment replenishment remain future work.
+- Core remains at published version `v0.2.0`; no new release or submodule update is included.
 
 ### General Implementation Status
 
 - No production artistic assets have been imported.
-- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition, SegmentPool and SegmentSpawner configuration/sequence/placement/geometric validation, WorldMovement registration, individual despawn and bulk active-segment cleanup.
+- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition, SegmentPool and SegmentSpawner configuration/sequence/placement/geometric validation, WorldMovement registration, individual despawn, bulk active-segment cleanup and recycle-reference candidate detection.
 - The Lane System implementation, tests and documentation are committed and pushed to the Core repository.
 - Sprint 2.4.1 implementation and documentation are committed and pushed to the Core repository; the corresponding SANTA DASH development log is also committed and pushed.
 - Sprint 2.4.2 implementation, tests, documentation and repository commits are complete.
@@ -906,7 +935,9 @@ Provide a reusable, host-independent spatial reference for detecting when an act
 - Sprint 2.6.3.2.2.2 SegmentSpawner geometric validation passed 221 assertions with no errors in the temporary test project. Implementation and documentation were published; both repositories were confirmed published.
 - Sprint 2.6.3.3.1 SegmentSpawner / WorldMovement registration passed 256 assertions with no errors. Implementation and documentation were published in Core and Santa Dash.
 - Sprint 2.6.3.3.2.1 individual segment despawn passed 317 assertions with no errors in the temporary test project. Implementation and documentation were published in Core and recorded in this development log.
-- Sprint 2.6.3.3.2.2 bulk active-segment cleanup passed the complete SegmentSpawner suite with 354 assertions and no reported errors. Core implementation, tests and documentation, plus this SANTA DASH development-log entry, are prepared for repository publication.
+- Sprint 2.6.3.3.2.2 bulk active-segment cleanup passed the complete SegmentSpawner suite with 354 assertions and no reported errors. Core implementation and documentation, plus this SANTA DASH development-log entry, were published.
+- Sprint 2.6.3.3.3.1 recycle-reference detection passed the complete SegmentSpawner suite with 394 assertions and no reported errors; implementation and documentation were published.
+- Sprint 2.6.3.3.3.2 reverse-side segment extension is prepared and awaits Godot validation.
 
 ---
 
