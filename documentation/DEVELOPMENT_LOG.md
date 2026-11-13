@@ -6,7 +6,7 @@
 - Engine: Godot 4.7.2-stable
 - Language: Typed GDScript
 - Current phase: Phase 2 — Core Gameplay Systems
-- Current sprint: Sprint 2.6.3.3.3.3 — Explicit Segment Recycling
+- Current sprint: Sprint 2.6.3.3.4 — Minimum-Count Track Maintenance
 
 ---
 
@@ -918,7 +918,7 @@ Correct segment placement direction so the active track continues to extend ahea
 
 ### Sprint 2.6.3.3.3.3 — Explicit Recyclable-Segment Despawning
 
-**Status: Implemented and validated; repository publication pending.**
+**Status: Implemented, validated and published.**
 
 **Objective**
 
@@ -954,10 +954,46 @@ Add an explicit `recycle_segments() -> int` operation to `SegmentSpawner`. The m
 - No production artistic assets were required.
 - Core remains at published version `v0.2.0`; no new release or submodule update is included in this subphase.
 
+### Sprint 2.6.3.3.4 — Minimum-Count Track Maintenance
+
+**Status: Implemented; Godot validation and repository publication pending.**
+
+**Objective**
+
+Add an explicit `maintain_track() -> bool` operation to `SegmentSpawner`. It recycles eligible trailing segments while preserving at least one active segment, then replenishes the leading end until a configurable minimum active count is reached.
+
+**Implementation**
+
+- Added the read-only `minimum_active_segment_count` property, defaulting to `3`.
+- Added `set_minimum_active_segment_count(count: int) -> bool`; values below `2` are rejected without changing the current setting.
+- Added `maintain_track() -> bool` with preconditions for valid configuration, in-tree `WorldRoot`, `SegmentPool` and `WorldMovement`, a bound recycle reference, and at least one active segment.
+- The host must create the initial segment with `spawn_first_segment()`; `maintain_track()` does not initialize an empty track.
+- The method obtains the existing trailing-first recyclable candidate snapshot and calls `despawn_segment()` for each candidate while more than one active segment remains.
+- It never removes the final active segment. It then calls `spawn_next_segment()` until the configured minimum is reached, extending the leading (`-Z`) end through the established marker-alignment and pooling path.
+- The target is a minimum, not a maximum. Non-recyclable segments are not removed merely because the active count exceeds the target.
+- Individual despawn failures do not prevent later safe candidates from being attempted. A spawn failure stops replenishment for that call.
+- Successful partial work is retained; no cross-operation transaction is attempted. A later explicit call can retry from the consistent active state.
+- The method returns `true` only when the target is reached and all attempted recycle/spawn operations succeed. It returns `false` if an operation fails or the target remains unmet.
+- `maintain_track()` does not start or stop `WorldMovement`, reset or rewind `sequence_index`, use `_process()`, create a timer, or depend directly on `GameFlowManager`.
+- Updated `generation/spawning/segment_spawner.gd`, `tests/test_segment_spawner.gd`, Core `API_REFERENCE.md`, `ARCHITECTURE.md` and `CHANGELOG.md`.
+
+**Validation**
+
+- Added 106 assertions covering minimum-count defaults and configuration, unconfigured/missing-reference/empty-track preconditions, initial fill, no-op maintenance, recycle order, final-segment protection, pool reuse, configurable minimum targets, active/stopped `WorldMovement`, release-failure rollback, partial progress, exhausted-pool spawn failure and retry.
+- Expected complete SegmentSpawner suite total: 573 assertions (467 previously passing plus 106 new assertions).
+- The updated suite has not yet been executed by the user in `endless-runner-core-test`; this sprint must remain unvalidated until Godot reports a full pass.
+- No production artistic assets or SANTA DASH production-scene changes are required.
+
+**Scope and limitations**
+
+- This increment adds explicit track maintenance only. The host must decide when to call `maintain_track()`; automatic lifecycle invocation and production-scene wiring remain future work.
+- Procedural segment selection and difficulty-aware spawn patterns are not included.
+- Core remains at published version `v0.2.0`; no new release or submodule update is included.
+
 ### General Implementation Status
 
 - No production artistic assets have been imported.
-- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition, SegmentPool and SegmentSpawner configuration/sequence/placement/geometric validation, WorldMovement registration, individual despawn, bulk active-segment cleanup, recycle-reference candidate detection, reverse-side segment extension and explicit recyclable-segment despawning.
+- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition, SegmentPool and SegmentSpawner configuration/sequence/placement/geometric validation, WorldMovement registration, individual despawn, bulk active-segment cleanup, recycle-reference candidate detection, reverse-side segment extension, explicit recyclable-segment despawning and minimum-count track maintenance.
 - The Lane System implementation, tests and documentation are committed and pushed to the Core repository.
 - Sprint 2.4.1 implementation and documentation are committed and pushed to the Core repository; the corresponding SANTA DASH development log is also committed and pushed.
 - Sprint 2.4.2 implementation, tests, documentation and repository commits are complete.
@@ -979,7 +1015,7 @@ Add an explicit `recycle_segments() -> int` operation to `SegmentSpawner`. The m
 - Sprint 2.6.3.3.2.2 bulk active-segment cleanup passed the complete SegmentSpawner suite with 354 assertions and no reported errors. Core implementation and documentation, plus this SANTA DASH development-log entry, were published.
 - Sprint 2.6.3.3.3.1 recycle-reference detection passed the complete SegmentSpawner suite with 394 assertions and no reported errors; implementation and documentation were published.
 - Sprint 2.6.3.3.3.2 reverse-side segment extension passed the complete SegmentSpawner suite with 402 assertions and no reported errors; Core and SANTA DASH repository changes were committed and published.
-- Sprint 2.6.3.3.3.3 explicit recyclable-segment despawning passed the complete SegmentSpawner suite with 467 assertions and no reported errors. Core implementation, tests and documentation are validated; repository publication is pending.
+- Sprint 2.6.3.3.3.3 explicit recyclable-segment despawning passed the complete SegmentSpawner suite with 467 assertions and no reported errors; Core implementation, tests and documentation, plus the SANTA DASH development-log update, were committed and pushed.
 
 ---
 
