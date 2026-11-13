@@ -851,6 +851,39 @@ Add `clear_active_segments() -> bool` to `SegmentSpawner` so the host can attemp
 - No production artistic assets were required.
 - Core `v0.2.0` remains the published release. This implementation is validated in the working development state but has not yet been published as a new Core release.
 
+### Sprint 2.6.3.3.3.1 — Recycle Reference and Candidate Detection
+
+**Status: Implementation prepared; Godot validation and repository publication pending.**
+
+**Objective**
+
+Provide a reusable, host-independent spatial reference for detecting when an active segment has moved sufficiently far behind the player. This subphase detects candidates only; it does not despawn or replenish segments.
+
+**Core implementation**
+
+- Added `SegmentSpawner.bind_recycle_reference(reference: Node3D) -> bool`.
+- The host supplies a valid `Node3D` reference after `SegmentSpawner.configure()`. The reference must be inside the scene tree, not queued for deletion, and cannot be `WorldRoot` or one of its descendants.
+- Core does not depend on `PlayerMovement`, Santa or any concrete player class.
+- Added `set_recycle_distance(distance: float) -> bool` and read-only `recycle_distance`. The default is 15.0 meters. Finite non-negative values are accepted; negative and non-finite values are rejected without changing the current setting.
+- Added `get_recyclable_segments() -> Array[Node3D]`. It returns a snapshot of active segments whose direct-child `EntryPoint` has reached or passed `reference_local_z + recycle_distance` along `WorldRoot`-local +Z.
+- The comparison converts global positions into `WorldRoot` local space, so it does not assume that the player is located at Z = 0 and remains valid under a translated shared parent.
+- The comparison is inclusive at the threshold.
+- Detection is read-only with respect to the active segment lifecycle: it does not despawn, unregister, reparent or move segments, and does not alter `sequence_index` or `WorldMovement` state.
+- Detection is independent of whether `WorldMovement` is active or stopped.
+- Updated Core API, architecture and changelog documentation.
+
+**Validation plan**
+
+- Extended `tests/test_segment_spawner.gd` to cover binding validation, non-zero player Z, translated parent coordinates, threshold boundary behavior, configurable distance, invalid distances, stopped and active movement, and the guarantee that detection does not despawn segments.
+- Godot execution has not yet been performed in this subphase. Do not treat the new assertions as passed until the full test suite reports a successful result in `endless-runner-core-test`.
+
+**Scope and limitations**
+
+- This subphase implements reference binding and candidate detection only.
+- Automatic calls to `despawn_segment()`, replenishment of the active track and procedural selection remain future work.
+- No production artistic assets or SANTA DASH production-scene changes are required at this stage.
+- The Core published release remains `v0.2.0`; no new release or submodule update is included.
+
 ### General Implementation Status
 
 - No production artistic assets have been imported.
