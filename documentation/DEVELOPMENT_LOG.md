@@ -6,7 +6,7 @@
 - Engine: Godot 4.7.2-stable
 - Language: Typed GDScript
 - Current phase: Phase 2 — Core Gameplay Systems
-- Current sprint: Sprint 2.6.3.3.5 — Track Maintenance Controller Integration
+- Current sprint: Sprint 2.6.3.4.1 — Core Submodule Synchronization and Host Scene Preparation
 
 ---
 
@@ -996,7 +996,7 @@ Add an explicit `maintain_track() -> bool` operation to `SegmentSpawner`. It rec
 
 ### Sprint 2.6.3.3.5 — Track Maintenance Controller Integration
 
-**Status: Implemented and validated; repository publication pending.**
+**Status: Implemented, validated, committed and pushed to Core and SANTA DASH.**
 
 **Objective**
 
@@ -1023,7 +1023,7 @@ Add a reusable host-owned controller that periodically invokes `SegmentSpawner.m
 - Result: `PASS: TrackMaintenanceController tests completed successfully (62 assertions).`
 - All 62 assertions passed. The user reported no test failure; the Output message confirms successful completion.
 - The existing SegmentSpawner suite remains a separate suite and previously passed with 573 assertions; the controller test does not replace or merge with it.
-- Repository commits and pushes for this subphase have not yet been confirmed.
+- The user confirmed that the Core and SANTA DASH commits and pushes for this subphase were completed.
 
 **Scope and limitations**
 
@@ -1036,7 +1036,7 @@ Add a reusable host-owned controller that periodically invokes `SegmentSpawner.m
 ### General Implementation Status
 
 - No production artistic assets have been imported.
-- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition, SegmentPool and SegmentSpawner configuration/sequence/placement/geometric validation, WorldMovement registration, individual despawn, bulk active-segment cleanup, recycle-reference candidate detection, reverse-side segment extension, explicit recyclable-segment despawning and minimum-count track maintenance, and TrackMaintenanceController implementation (62 assertions passed; repository publication pending).
+- Implemented Core systems: Game Flow Manager, Player Controller (including the Sprint 2.4.1 Input Buffer), LaneSystem, PlayerMovement (lateral movement, jump/fall/landing and slide physics), AnimationConfig, AnimationController, WorldMovement, SegmentDefinition, SegmentPool and SegmentSpawner configuration/sequence/placement/geometric validation, WorldMovement registration, individual despawn, bulk active-segment cleanup, recycle-reference candidate detection, reverse-side segment extension, explicit recyclable-segment despawning and minimum-count track maintenance, and TrackMaintenanceController implementation (62 assertions passed, committed and pushed).
 - The Lane System implementation, tests and documentation are committed and pushed to the Core repository.
 - Sprint 2.4.1 implementation and documentation are committed and pushed to the Core repository; the corresponding SANTA DASH development log is also committed and pushed.
 - Sprint 2.4.2 implementation, tests, documentation and repository commits are complete.
@@ -1060,7 +1060,7 @@ Add a reusable host-owned controller that periodically invokes `SegmentSpawner.m
 - Sprint 2.6.3.3.3.2 reverse-side segment extension passed the complete SegmentSpawner suite with 402 assertions and no reported errors; Core and SANTA DASH repository changes were committed and published.
 - Sprint 2.6.3.3.3.3 explicit recyclable-segment despawning passed the complete SegmentSpawner suite with 467 assertions and no reported errors; Core implementation, tests and documentation, plus the SANTA DASH development-log update, were committed and pushed.
 - Sprint 2.6.3.3.4 minimum-count track maintenance passed the complete SegmentSpawner suite with 573 assertions and no reported errors; the user confirmed the Core and SANTA DASH commits and pushes were completed.
-- Sprint 2.6.3.3.5 TrackMaintenanceController passed its independent test suite with 62 assertions and no reported failures; Core and SANTA DASH repository publication remains pending.
+- Sprint 2.6.3.3.5 TrackMaintenanceController passed its independent test suite with 62 assertions and no reported failures; the user confirmed that Core and SANTA DASH commits and pushes were completed.
 
 ---
 
